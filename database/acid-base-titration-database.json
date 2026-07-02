@@ -1,0 +1,1028 @@
+{
+  "name": "Acid-Base Titration Database",
+  "version": "Version 1.0",
+  "lastUpdated": "2026-07-02",
+  "localeNote": "Names are localized in the app for Simplified Chinese, Traditional Chinese, English, and Japanese where labels are provided.",
+  "sources": [
+    "CRC Handbook of Chemistry and Physics",
+    "Lange's Handbook of Chemistry",
+    "NIST Chemistry WebBook",
+    "General analytical chemistry textbooks and standard acid-base indicator tables"
+  ],
+  "model": {
+    "waterIonProduct": "Kw = 1.0e-14 at 25 C",
+    "solver": "Mass balance, charge balance, acid-base distribution fractions, and numerical bisection for pH.",
+    "derivative": "First derivative is calculated from adjacent computed curve points."
+  },
+  "summary": {
+    "conjugateFamilies": 25,
+    "substances": 36,
+    "substancesByClass": {
+      "强酸": 3,
+      "强碱": 4,
+      "弱酸": 11,
+      "弱碱": 4,
+      "盐": 14
+    },
+    "indicatorsIncludingHidden": 19,
+    "visibleIndicators": 18
+  },
+  "families": {
+    "chloride": {
+      "name": "Cl⁻",
+      "charges": [
+        -1
+      ],
+      "pKas": []
+    },
+    "nitrate": {
+      "name": "NO₃⁻",
+      "charges": [
+        -1
+      ],
+      "pKas": []
+    },
+    "perchlorate": {
+      "name": "ClO₄⁻",
+      "charges": [
+        -1
+      ],
+      "pKas": []
+    },
+    "sodium": {
+      "name": "Na⁺",
+      "charges": [
+        1
+      ],
+      "pKas": []
+    },
+    "potassium": {
+      "name": "K⁺",
+      "charges": [
+        1
+      ],
+      "pKas": []
+    },
+    "barium": {
+      "name": "Ba²⁺",
+      "charges": [
+        2
+      ],
+      "pKas": []
+    },
+    "calcium": {
+      "name": "Ca²⁺",
+      "charges": [
+        2
+      ],
+      "pKas": []
+    },
+    "acetate": {
+      "name": "CH₃COOH / CH₃COO⁻",
+      "charges": [
+        0,
+        -1
+      ],
+      "pKas": [
+        4.756
+      ]
+    },
+    "formate": {
+      "name": "HCOOH / HCOO⁻",
+      "charges": [
+        0,
+        -1
+      ],
+      "pKas": [
+        3.745
+      ]
+    },
+    "fluoride": {
+      "name": "HF / F⁻",
+      "charges": [
+        0,
+        -1
+      ],
+      "pKas": [
+        3.17
+      ]
+    },
+    "cyanide": {
+      "name": "HCN / CN⁻",
+      "charges": [
+        0,
+        -1
+      ],
+      "pKas": [
+        9.21
+      ]
+    },
+    "nitrite": {
+      "name": "HNO₂ / NO₂⁻",
+      "charges": [
+        0,
+        -1
+      ],
+      "pKas": [
+        3.35
+      ]
+    },
+    "hypochlorite": {
+      "name": "HClO / ClO⁻",
+      "charges": [
+        0,
+        -1
+      ],
+      "pKas": [
+        7.53
+      ]
+    },
+    "benzoate": {
+      "name": "C₆H₅COOH / C₆H₅COO⁻",
+      "charges": [
+        0,
+        -1
+      ],
+      "pKas": [
+        4.2
+      ]
+    },
+    "lactate": {
+      "name": "C₃H₆O₃ / C₃H₅O₃⁻",
+      "charges": [
+        0,
+        -1
+      ],
+      "pKas": [
+        3.86
+      ]
+    },
+    "oxalate": {
+      "name": "H₂C₂O₄ / HC₂O₄⁻ / C₂O₄²⁻",
+      "charges": [
+        0,
+        -1,
+        -2
+      ],
+      "pKas": [
+        1.25,
+        4.27
+      ]
+    },
+    "citrate": {
+      "name": "H₃Cit / H₂Cit⁻ / HCit²⁻ / Cit³⁻",
+      "charges": [
+        0,
+        -1,
+        -2,
+        -3
+      ],
+      "pKas": [
+        3.13,
+        4.76,
+        6.4
+      ]
+    },
+    "borate": {
+      "name": "H₃BO₃ / B(OH)₄⁻",
+      "charges": [
+        0,
+        -1
+      ],
+      "pKas": [
+        9.24
+      ]
+    },
+    "ammonium": {
+      "name": "NH₄⁺ / NH₃",
+      "charges": [
+        1,
+        0
+      ],
+      "pKas": [
+        9.25
+      ]
+    },
+    "methylammonium": {
+      "name": "CH₃NH₃⁺ / CH₃NH₂",
+      "charges": [
+        1,
+        0
+      ],
+      "pKas": [
+        10.64
+      ]
+    },
+    "ethylammonium": {
+      "name": "C₂H₅NH₃⁺ / C₂H₅NH₂",
+      "charges": [
+        1,
+        0
+      ],
+      "pKas": [
+        10.75
+      ]
+    },
+    "anilinium": {
+      "name": "C₆H₅NH₃⁺ / C₆H₅NH₂",
+      "charges": [
+        1,
+        0
+      ],
+      "pKas": [
+        4.6
+      ]
+    },
+    "carbonate": {
+      "name": "H₂CO₃ / HCO₃⁻ / CO₃²⁻",
+      "charges": [
+        0,
+        -1,
+        -2
+      ],
+      "pKas": [
+        6.35,
+        10.33
+      ]
+    },
+    "sulfite": {
+      "name": "H₂SO₃ / HSO₃⁻ / SO₃²⁻",
+      "charges": [
+        0,
+        -1,
+        -2
+      ],
+      "pKas": [
+        1.81,
+        7.2
+      ]
+    },
+    "phosphate": {
+      "name": "H₃PO₄ / H₂PO₄⁻ / HPO₄²⁻ / PO₄³⁻",
+      "charges": [
+        0,
+        -1,
+        -2,
+        -3
+      ],
+      "pKas": [
+        2.15,
+        7.2,
+        12.35
+      ]
+    }
+  },
+  "substances": {
+    "HCl": {
+      "label": "HCl",
+      "className": "强酸",
+      "acidCapacity": 1,
+      "baseCapacity": 0,
+      "components": [
+        {
+          "family": "chloride",
+          "stoich": 1
+        }
+      ]
+    },
+    "HNO3": {
+      "label": "HNO₃",
+      "className": "强酸",
+      "acidCapacity": 1,
+      "baseCapacity": 0,
+      "components": [
+        {
+          "family": "nitrate",
+          "stoich": 1
+        }
+      ]
+    },
+    "HClO4": {
+      "label": "HClO₄",
+      "className": "强酸",
+      "acidCapacity": 1,
+      "baseCapacity": 0,
+      "components": [
+        {
+          "family": "perchlorate",
+          "stoich": 1
+        }
+      ]
+    },
+    "NaOH": {
+      "label": "NaOH",
+      "className": "强碱",
+      "acidCapacity": 0,
+      "baseCapacity": 1,
+      "components": [
+        {
+          "family": "sodium",
+          "stoich": 1
+        }
+      ]
+    },
+    "KOH": {
+      "label": "KOH",
+      "className": "强碱",
+      "acidCapacity": 0,
+      "baseCapacity": 1,
+      "components": [
+        {
+          "family": "potassium",
+          "stoich": 1
+        }
+      ]
+    },
+    "BaOH2": {
+      "label": "Ba(OH)₂",
+      "className": "强碱",
+      "acidCapacity": 0,
+      "baseCapacity": 2,
+      "components": [
+        {
+          "family": "barium",
+          "stoich": 1
+        }
+      ]
+    },
+    "CaOH2": {
+      "label": "Ca(OH)₂",
+      "className": "强碱",
+      "acidCapacity": 0,
+      "baseCapacity": 2,
+      "components": [
+        {
+          "family": "calcium",
+          "stoich": 1
+        }
+      ]
+    },
+    "AcOH": {
+      "label": "CH₃COOH",
+      "className": "弱酸",
+      "acidCapacity": 1,
+      "baseCapacity": 0,
+      "components": [
+        {
+          "family": "acetate",
+          "stoich": 1
+        }
+      ]
+    },
+    "HCOOH": {
+      "label": "HCOOH",
+      "className": "弱酸",
+      "acidCapacity": 1,
+      "baseCapacity": 0,
+      "components": [
+        {
+          "family": "formate",
+          "stoich": 1
+        }
+      ]
+    },
+    "HF": {
+      "label": "HF",
+      "className": "弱酸",
+      "acidCapacity": 1,
+      "baseCapacity": 0,
+      "components": [
+        {
+          "family": "fluoride",
+          "stoich": 1
+        }
+      ]
+    },
+    "HCN": {
+      "label": "HCN",
+      "className": "弱酸",
+      "acidCapacity": 1,
+      "baseCapacity": 0,
+      "components": [
+        {
+          "family": "cyanide",
+          "stoich": 1
+        }
+      ]
+    },
+    "HNO2": {
+      "label": "HNO₂",
+      "className": "弱酸",
+      "acidCapacity": 1,
+      "baseCapacity": 0,
+      "components": [
+        {
+          "family": "nitrite",
+          "stoich": 1
+        }
+      ]
+    },
+    "HClO": {
+      "label": "HClO",
+      "className": "弱酸",
+      "acidCapacity": 1,
+      "baseCapacity": 0,
+      "components": [
+        {
+          "family": "hypochlorite",
+          "stoich": 1
+        }
+      ]
+    },
+    "BenzoicAcid": {
+      "label": "C₆H₅COOH",
+      "className": "弱酸",
+      "acidCapacity": 1,
+      "baseCapacity": 0,
+      "components": [
+        {
+          "family": "benzoate",
+          "stoich": 1
+        }
+      ]
+    },
+    "LacticAcid": {
+      "label": "乳酸",
+      "formula": "C₃H₆O₃",
+      "labels": {
+        "zhHans": "乳酸",
+        "zhHant": "乳酸",
+        "en": "Lactic acid",
+        "ja": "乳酸"
+      },
+      "className": "弱酸",
+      "acidCapacity": 1,
+      "baseCapacity": 0,
+      "components": [
+        {
+          "family": "lactate",
+          "stoich": 1
+        }
+      ]
+    },
+    "OxalicAcid": {
+      "label": "H₂C₂O₄",
+      "className": "弱酸",
+      "acidCapacity": 2,
+      "baseCapacity": 0,
+      "components": [
+        {
+          "family": "oxalate",
+          "stoich": 1
+        }
+      ]
+    },
+    "CitricAcid": {
+      "label": "柠檬酸",
+      "formula": "C₆H₈O₇",
+      "labels": {
+        "zhHans": "柠檬酸",
+        "zhHant": "檸檬酸",
+        "en": "Citric acid",
+        "ja": "クエン酸"
+      },
+      "className": "弱酸",
+      "acidCapacity": 3,
+      "baseCapacity": 0,
+      "components": [
+        {
+          "family": "citrate",
+          "stoich": 1
+        }
+      ]
+    },
+    "BoricAcid": {
+      "label": "H₃BO₃",
+      "className": "弱酸",
+      "acidCapacity": 1,
+      "baseCapacity": 0,
+      "components": [
+        {
+          "family": "borate",
+          "stoich": 1
+        }
+      ]
+    },
+    "NH3": {
+      "label": "NH₃·H₂O",
+      "className": "弱碱",
+      "acidCapacity": 0,
+      "baseCapacity": 1,
+      "components": [
+        {
+          "family": "ammonium",
+          "stoich": 1
+        }
+      ]
+    },
+    "Methylamine": {
+      "label": "CH₃NH₂",
+      "className": "弱碱",
+      "acidCapacity": 0,
+      "baseCapacity": 1,
+      "components": [
+        {
+          "family": "methylammonium",
+          "stoich": 1
+        }
+      ]
+    },
+    "Ethylamine": {
+      "label": "C₂H₅NH₂",
+      "className": "弱碱",
+      "acidCapacity": 0,
+      "baseCapacity": 1,
+      "components": [
+        {
+          "family": "ethylammonium",
+          "stoich": 1
+        }
+      ]
+    },
+    "Aniline": {
+      "label": "C₆H₅NH₂",
+      "className": "弱碱",
+      "acidCapacity": 0,
+      "baseCapacity": 1,
+      "components": [
+        {
+          "family": "anilinium",
+          "stoich": 1
+        }
+      ]
+    },
+    "Na2CO3": {
+      "label": "Na₂CO₃",
+      "className": "盐",
+      "acidCapacity": 0,
+      "baseCapacity": 2,
+      "components": [
+        {
+          "family": "carbonate",
+          "stoich": 1
+        },
+        {
+          "family": "sodium",
+          "stoich": 2
+        }
+      ]
+    },
+    "NaHCO3": {
+      "label": "NaHCO₃",
+      "className": "盐",
+      "acidCapacity": 1,
+      "baseCapacity": 1,
+      "components": [
+        {
+          "family": "carbonate",
+          "stoich": 1
+        },
+        {
+          "family": "sodium",
+          "stoich": 1
+        }
+      ]
+    },
+    "NaNO2": {
+      "label": "NaNO₂",
+      "className": "盐",
+      "acidCapacity": 0,
+      "baseCapacity": 1,
+      "components": [
+        {
+          "family": "nitrite",
+          "stoich": 1
+        },
+        {
+          "family": "sodium",
+          "stoich": 1
+        }
+      ]
+    },
+    "NaClO": {
+      "label": "NaClO",
+      "className": "盐",
+      "acidCapacity": 0,
+      "baseCapacity": 1,
+      "components": [
+        {
+          "family": "hypochlorite",
+          "stoich": 1
+        },
+        {
+          "family": "sodium",
+          "stoich": 1
+        }
+      ]
+    },
+    "NaF": {
+      "label": "NaF",
+      "className": "盐",
+      "acidCapacity": 0,
+      "baseCapacity": 1,
+      "components": [
+        {
+          "family": "fluoride",
+          "stoich": 1
+        },
+        {
+          "family": "sodium",
+          "stoich": 1
+        }
+      ]
+    },
+    "NaHSO3": {
+      "label": "NaHSO₃",
+      "className": "盐",
+      "acidCapacity": 1,
+      "baseCapacity": 1,
+      "components": [
+        {
+          "family": "sulfite",
+          "stoich": 1
+        },
+        {
+          "family": "sodium",
+          "stoich": 1
+        }
+      ]
+    },
+    "Na2HPO4": {
+      "label": "Na₂HPO₄",
+      "className": "盐",
+      "acidCapacity": 1,
+      "baseCapacity": 2,
+      "components": [
+        {
+          "family": "phosphate",
+          "stoich": 1
+        },
+        {
+          "family": "sodium",
+          "stoich": 2
+        }
+      ]
+    },
+    "NaH2PO4": {
+      "label": "NaH₂PO₄",
+      "className": "盐",
+      "acidCapacity": 2,
+      "baseCapacity": 1,
+      "components": [
+        {
+          "family": "phosphate",
+          "stoich": 1
+        },
+        {
+          "family": "sodium",
+          "stoich": 1
+        }
+      ]
+    },
+    "AcONa": {
+      "label": "CH₃COONa",
+      "className": "盐",
+      "acidCapacity": 0,
+      "baseCapacity": 1,
+      "components": [
+        {
+          "family": "acetate",
+          "stoich": 1
+        },
+        {
+          "family": "sodium",
+          "stoich": 1
+        }
+      ]
+    },
+    "SodiumBenzoate": {
+      "label": "C₆H₅COONa",
+      "className": "盐",
+      "acidCapacity": 0,
+      "baseCapacity": 1,
+      "components": [
+        {
+          "family": "benzoate",
+          "stoich": 1
+        },
+        {
+          "family": "sodium",
+          "stoich": 1
+        }
+      ]
+    },
+    "SodiumOxalate": {
+      "label": "Na₂C₂O₄",
+      "className": "盐",
+      "acidCapacity": 0,
+      "baseCapacity": 2,
+      "components": [
+        {
+          "family": "oxalate",
+          "stoich": 1
+        },
+        {
+          "family": "sodium",
+          "stoich": 2
+        }
+      ]
+    },
+    "TrisodiumCitrate": {
+      "label": "Na₃Cit",
+      "className": "盐",
+      "acidCapacity": 0,
+      "baseCapacity": 3,
+      "components": [
+        {
+          "family": "citrate",
+          "stoich": 1
+        },
+        {
+          "family": "sodium",
+          "stoich": 3
+        }
+      ]
+    },
+    "NH4Cl": {
+      "label": "NH₄Cl",
+      "className": "盐",
+      "acidCapacity": 1,
+      "baseCapacity": 0,
+      "components": [
+        {
+          "family": "ammonium",
+          "stoich": 1
+        },
+        {
+          "family": "chloride",
+          "stoich": 1
+        }
+      ]
+    },
+    "NH4NO3": {
+      "label": "NH₄NO₃",
+      "className": "盐",
+      "acidCapacity": 1,
+      "baseCapacity": 0,
+      "components": [
+        {
+          "family": "ammonium",
+          "stoich": 1
+        },
+        {
+          "family": "nitrate",
+          "stoich": 1
+        }
+      ]
+    }
+  },
+  "indicators": {
+    "none": {
+      "label": "无",
+      "labels": {
+        "zhHans": "不显示",
+        "zhHant": "不顯示",
+        "en": "Hidden",
+        "ja": "非表示"
+      },
+      "low": null,
+      "high": null,
+      "acid": "#ffffff",
+      "base": "#ffffff"
+    },
+    "methylViolet": {
+      "label": "甲基紫",
+      "labels": {
+        "zhHans": "甲基紫",
+        "zhHant": "甲基紫",
+        "en": "Methyl violet",
+        "ja": "メチルバイオレット"
+      },
+      "low": 0,
+      "high": 1.6,
+      "acid": "#f0c425",
+      "base": "#6542a6"
+    },
+    "cresolRed1": {
+      "label": "甲酚红 I",
+      "labels": {
+        "zhHans": "甲酚红 I",
+        "zhHant": "甲酚紅 I",
+        "en": "Cresol red I",
+        "ja": "クレゾールレッド I"
+      },
+      "low": 0.2,
+      "high": 1.8,
+      "acid": "#c83232",
+      "base": "#f3cf25"
+    },
+    "methylOrange": {
+      "label": "甲基橙",
+      "labels": {
+        "zhHans": "甲基橙",
+        "zhHant": "甲基橙",
+        "en": "Methyl orange",
+        "ja": "メチルオレンジ"
+      },
+      "low": 3.1,
+      "high": 4.4,
+      "acid": "#e3392e",
+      "base": "#ffd31a"
+    },
+    "bromophenolBlue": {
+      "label": "溴酚蓝",
+      "labels": {
+        "zhHans": "溴酚蓝",
+        "zhHant": "溴酚藍",
+        "en": "Bromophenol blue",
+        "ja": "ブロモフェノールブルー"
+      },
+      "low": 3,
+      "high": 4.6,
+      "acid": "#f2d94e",
+      "base": "#4668d7"
+    },
+    "congoRed": {
+      "label": "刚果红",
+      "labels": {
+        "zhHans": "刚果红",
+        "zhHant": "剛果紅",
+        "en": "Congo red",
+        "ja": "コンゴーレッド"
+      },
+      "low": 3,
+      "high": 5.2,
+      "acid": "#3655b7",
+      "base": "#d64545"
+    },
+    "methylRed": {
+      "label": "甲基红",
+      "labels": {
+        "zhHans": "甲基红",
+        "zhHant": "甲基紅",
+        "en": "Methyl red",
+        "ja": "メチルレッド"
+      },
+      "low": 4.4,
+      "high": 6.2,
+      "acid": "#d92828",
+      "base": "#f5dc35"
+    },
+    "bromocresolGreen": {
+      "label": "溴甲酚绿",
+      "labels": {
+        "zhHans": "溴甲酚绿",
+        "zhHant": "溴甲酚綠",
+        "en": "Bromocresol green",
+        "ja": "ブロモクレゾールグリーン"
+      },
+      "low": 3.8,
+      "high": 5.4,
+      "acid": "#ffd63d",
+      "base": "#1f65c8"
+    },
+    "chlorophenolRed": {
+      "label": "氯酚红",
+      "labels": {
+        "zhHans": "氯酚红",
+        "zhHant": "氯酚紅",
+        "en": "Chlorophenol red",
+        "ja": "クロロフェノールレッド"
+      },
+      "low": 4.8,
+      "high": 6.4,
+      "acid": "#f0d642",
+      "base": "#d33f43"
+    },
+    "bromocresolPurple": {
+      "label": "溴甲酚紫",
+      "labels": {
+        "zhHans": "溴甲酚紫",
+        "zhHant": "溴甲酚紫",
+        "en": "Bromocresol purple",
+        "ja": "ブロモクレゾールパープル"
+      },
+      "low": 5.2,
+      "high": 6.8,
+      "acid": "#f0d33b",
+      "base": "#7b4ab8"
+    },
+    "bromothymolBlue": {
+      "label": "溴百里酚蓝",
+      "labels": {
+        "zhHans": "溴百里酚蓝",
+        "zhHant": "溴百里酚藍",
+        "en": "Bromothymol blue",
+        "ja": "ブロモチモールブルー"
+      },
+      "low": 6,
+      "high": 7.6,
+      "acid": "#f1d032",
+      "base": "#2178c9"
+    },
+    "neutralRed": {
+      "label": "中性红",
+      "labels": {
+        "zhHans": "中性红",
+        "zhHant": "中性紅",
+        "en": "Neutral red",
+        "ja": "ニュートラルレッド"
+      },
+      "low": 6.8,
+      "high": 8,
+      "acid": "#d93442",
+      "base": "#e8c94a"
+    },
+    "phenolRed": {
+      "label": "酚红",
+      "labels": {
+        "zhHans": "酚红",
+        "zhHant": "酚紅",
+        "en": "Phenol red",
+        "ja": "フェノールレッド"
+      },
+      "low": 6.8,
+      "high": 8.4,
+      "acid": "#f1d13a",
+      "base": "#d7383d"
+    },
+    "cresolRed2": {
+      "label": "甲酚红 II",
+      "labels": {
+        "zhHans": "甲酚红 II",
+        "zhHant": "甲酚紅 II",
+        "en": "Cresol red II",
+        "ja": "クレゾールレッド II"
+      },
+      "low": 7.2,
+      "high": 8.8,
+      "acid": "#f2d33c",
+      "base": "#d33d40"
+    },
+    "phenolphthalein": {
+      "label": "酚酞",
+      "labels": {
+        "zhHans": "酚酞",
+        "zhHant": "酚酞",
+        "en": "Phenolphthalein",
+        "ja": "フェノールフタレイン"
+      },
+      "low": 8.2,
+      "high": 10,
+      "acid": "#ffffff",
+      "base": "#f04a8a"
+    },
+    "thymolBlue1": {
+      "label": "百里酚蓝 I",
+      "labels": {
+        "zhHans": "百里酚蓝 I",
+        "zhHant": "百里酚藍 I",
+        "en": "Thymol blue I",
+        "ja": "チモールブルー I"
+      },
+      "low": 1.2,
+      "high": 2.8,
+      "acid": "#d92525",
+      "base": "#f3cf25"
+    },
+    "thymolBlue2": {
+      "label": "百里酚蓝 II",
+      "labels": {
+        "zhHans": "百里酚蓝 II",
+        "zhHant": "百里酚藍 II",
+        "en": "Thymol blue II",
+        "ja": "チモールブルー II"
+      },
+      "low": 8,
+      "high": 9.6,
+      "acid": "#f3cf25",
+      "base": "#1958b7"
+    },
+    "alizarinYellowR": {
+      "label": "茜素黄 R",
+      "labels": {
+        "zhHans": "茜素黄 R",
+        "zhHant": "茜素黃 R",
+        "en": "Alizarin yellow R",
+        "ja": "アリザリンイエロー R"
+      },
+      "low": 10.1,
+      "high": 12,
+      "acid": "#efd33a",
+      "base": "#cc3b3b"
+    },
+    "litmus": {
+      "label": "石蕊",
+      "labels": {
+        "zhHans": "石蕊",
+        "zhHant": "石蕊",
+        "en": "Litmus",
+        "ja": "リトマス"
+      },
+      "low": 4.5,
+      "high": 8.3,
+      "acid": "#d64654",
+      "base": "#3755c8"
+    }
+  }
+}

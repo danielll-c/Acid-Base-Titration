@@ -1,0 +1,2578 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>酸碱中和滴定曲线模拟器</title>
+  <style>
+    :root {
+      --ink: #172026;
+      --muted: #5f6870;
+      --faint: #8b949c;
+      --paper: #f7f5ef;
+      --panel: rgba(255, 255, 252, 0.92);
+      --line: rgba(35, 47, 57, 0.14);
+      --blue: #0b74c8;
+      --cyan: #119da4;
+      --red: #c63f3f;
+      --amber: #d89018;
+      --green: #2f8f63;
+      --violet: #6657b8;
+      --shadow: 0 18px 46px rgba(22, 28, 35, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background:
+        linear-gradient(135deg, rgba(11, 116, 200, 0.08), transparent 36%),
+        linear-gradient(310deg, rgba(216, 144, 24, 0.08), transparent 38%),
+        repeating-linear-gradient(90deg, rgba(23, 32, 38, 0.025) 0 1px, transparent 1px 22px),
+        var(--paper);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+    }
+
+    main {
+      width: min(96vw, calc((100vh - 24px) * 16 / 9));
+      max-height: calc(100vh - 24px);
+      aspect-ratio: 16 / 9;
+      min-width: 1080px;
+      min-height: 607.5px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 500px;
+      gap: 18px;
+      padding: 18px;
+    }
+
+    .left {
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: 74px minmax(0, 1fr) 104px;
+      gap: 12px;
+    }
+
+    .title-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      align-items: end;
+      min-width: 0;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: var(--title-size, clamp(24px, 2.35vw, 34px));
+      line-height: 1.05;
+      letter-spacing: 0;
+      white-space: nowrap;
+      overflow: visible;
+    }
+
+    .subtitle {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 17px;
+      white-space: nowrap;
+      overflow: visible;
+    }
+
+    .mode-control,
+    .chart-panel,
+    .readout-strip,
+    .side-panel,
+    .card,
+    .field {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .mode-control {
+      display: inline-grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 4px;
+      padding: 4px;
+      box-shadow: none;
+      width: 100%;
+    }
+
+    .mode-control button,
+    .icon-button,
+    .ghost-button {
+      appearance: none;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      cursor: pointer;
+      transition: background 160ms ease, color 160ms ease, transform 160ms ease;
+    }
+
+    .mode-control button {
+      min-width: 0;
+      height: 32px;
+      font-size: 14px;
+      font-weight: 650;
+    }
+
+    .mode-control button.active {
+      background: #172026;
+      color: white;
+    }
+
+    .mode-control button.active:hover {
+      background: #172026;
+      color: white;
+    }
+
+    .mode-control button:hover,
+    .icon-button:hover,
+    .ghost-button:hover {
+      transform: translateY(-1px);
+      background: rgba(23, 32, 38, 0.07);
+    }
+
+    .chart-panel {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+      padding: 14px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .chart-badge {
+      display: none;
+      position: absolute;
+      left: 22px;
+      top: 18px;
+      display: none;
+      align-items: center;
+      gap: 9px;
+      pointer-events: none;
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--blue);
+      box-shadow: 0 0 0 4px rgba(11, 116, 200, 0.12);
+    }
+
+    .dot.deriv {
+      background: var(--red);
+      box-shadow: 0 0 0 4px rgba(198, 63, 63, 0.12);
+    }
+
+    .readout-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      padding: 13px;
+      min-height: 0;
+    }
+
+    .metric {
+      min-width: 0;
+      height: 78px;
+      border-radius: 7px;
+      background: rgba(248, 248, 244, 0.86);
+      border: 1px solid rgba(35, 47, 57, 0.10);
+      padding: 11px 12px 8px;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      align-content: stretch;
+      gap: 4px;
+    }
+
+    .metric .label {
+      color: var(--faint);
+      font-size: 14px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .metric .value {
+      font-size: clamp(17px, 1.12vw, 23px);
+      font-weight: 800;
+      line-height: 1.08;
+      white-space: nowrap;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding-bottom: 14px;
+      font-variant-numeric: tabular-nums;
+      scrollbar-width: thin;
+    }
+
+    .metric .value::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .side-panel {
+      min-height: 0;
+      min-width: 0;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) 38px;
+      gap: 11px;
+      padding: 18px;
+      overflow: hidden;
+      background: rgba(255, 255, 252, 0.94);
+    }
+
+    .side-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 190px;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .side-head h2 {
+      margin: 0;
+      font-size: 30px;
+      font-weight: 760;
+      letter-spacing: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .icon-button {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .form-scroll {
+      min-height: 0;
+      min-width: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-gutter: stable;
+      display: grid;
+      grid-auto-rows: max-content;
+      gap: 14px;
+      padding-right: 4px;
+    }
+
+    .form-scroll::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .form-scroll::-webkit-scrollbar-track {
+      background: rgba(23, 32, 38, 0.045);
+      border-radius: 999px;
+    }
+
+    .form-scroll::-webkit-scrollbar-thumb {
+      background: rgba(23, 32, 38, 0.22);
+      border-radius: 999px;
+    }
+
+    .form-scroll::-webkit-scrollbar-thumb:hover {
+      background: rgba(23, 32, 38, 0.34);
+    }
+
+    .field {
+      min-width: 0;
+      box-shadow: none;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      padding: 0;
+    }
+
+    .section-group {
+      min-width: 0;
+      --section-accent: var(--blue);
+      --section-tint: rgba(11, 116, 200, 0.055);
+      border: 1px solid color-mix(in srgb, var(--section-accent) 24%, rgba(35, 47, 57, 0.12));
+      border-left: 5px solid var(--section-accent);
+      border-radius: 10px;
+      background:
+        linear-gradient(90deg, var(--section-tint), rgba(255, 255, 255, 0.72) 44%),
+        rgba(255, 255, 255, 0.72);
+      padding: 12px 18px 13px;
+      display: grid;
+      gap: 10px;
+      box-shadow: none;
+    }
+
+    .section-group:nth-of-type(1) {
+      --section-accent: var(--blue);
+      --section-tint: rgba(11, 116, 200, 0.065);
+    }
+
+    .section-group:nth-of-type(2) {
+      --section-accent: var(--green);
+      --section-tint: rgba(47, 143, 99, 0.07);
+    }
+
+    .section-group:nth-of-type(3) {
+      --section-accent: var(--amber);
+      --section-tint: rgba(216, 144, 24, 0.075);
+    }
+
+    .section-group:nth-of-type(4) {
+      --section-accent: var(--violet);
+      --section-tint: rgba(102, 87, 184, 0.07);
+    }
+
+    .section-title {
+      color: var(--ink);
+      font-size: 19px;
+      font-weight: 720;
+      line-height: 1.12;
+      padding: 0 0 7px;
+      white-space: nowrap;
+      overflow-x: auto;
+      scrollbar-width: thin;
+      border-bottom: 1px solid color-mix(in srgb, var(--section-accent) 26%, rgba(35, 47, 57, 0.11));
+    }
+
+    .with-icon {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    .side-head h2.with-icon,
+    .section-title.with-icon,
+    .subsection-title.with-icon,
+    .field label.with-icon,
+    .ghost-button.with-icon,
+    .mode-control button.with-icon {
+      display: flex;
+    }
+
+    .mini-icon {
+      width: 19px;
+      height: 19px;
+      flex: 0 0 auto;
+      color: var(--muted);
+    }
+
+    .side-head .mini-icon,
+    .section-title .mini-icon {
+      color: var(--section-accent, var(--ink));
+    }
+
+    .mode-control button .mini-icon,
+    .ghost-button .mini-icon {
+      width: 15px;
+      height: 15px;
+    }
+
+    .mode-control button {
+      justify-content: center;
+    }
+
+    .ghost-button {
+      justify-content: center;
+      align-items: center;
+    }
+
+    .with-icon .label-text {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .subsection-title {
+      color: var(--muted);
+      font-size: 13.5px;
+      font-weight: 650;
+      letter-spacing: 0;
+      white-space: nowrap;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+    }
+
+    .field label {
+      display: block;
+      color: var(--muted);
+      font-size: 13.5px;
+      font-weight: 650;
+      margin-bottom: 5px;
+      white-space: nowrap;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+    }
+
+    .field-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .field-head label {
+      margin-bottom: 0;
+    }
+
+    .checkline {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 13.5px;
+      font-weight: 650;
+      line-height: 18px;
+      white-space: nowrap;
+    }
+
+    .checkline input {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--blue);
+      margin: 0;
+      padding: 0;
+      transform: translateY(2px);
+    }
+
+    select,
+    input {
+      min-width: 0;
+      width: 100%;
+      height: 36px;
+      border: 1px solid rgba(35, 47, 57, 0.18);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.92);
+      color: var(--ink);
+      font: 650 16.5px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      padding: 0 14px;
+      outline: none;
+    }
+
+    .k-line {
+      min-height: 16px;
+      margin-top: 6px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--section-accent) 9%, rgba(255, 255, 255, 0.82));
+      color: var(--muted);
+      font-size: 12.5px;
+      font-weight: 400;
+      line-height: 1.25;
+      white-space: nowrap;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+    }
+
+    select:focus,
+    input:focus {
+      border-color: rgba(11, 116, 200, 0.6);
+      box-shadow: 0 0 0 3px rgba(11, 116, 200, 0.12);
+    }
+
+    input:disabled {
+      opacity: 0.42;
+      cursor: not-allowed;
+    }
+
+    .two-col {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .custom-fields {
+      display: none;
+      min-width: 0;
+      grid-template-columns: 1.15fr 0.75fr 0.9fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .custom-fields.active {
+      display: grid;
+    }
+
+    .custom-fields input,
+    .custom-fields select {
+      height: 30px;
+      font-size: 14px;
+    }
+
+    .utility-field {
+      display: grid;
+      grid-template-columns: 72px minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
+    }
+
+    .side-head .utility-field {
+      grid-template-columns: 22px minmax(0, 1fr);
+      gap: 6px;
+    }
+
+    .side-head .utility-field .label-text {
+      display: none;
+    }
+
+    .utility-field label {
+      margin-bottom: 0;
+    }
+
+    input[type="range"] {
+      height: 22px;
+      padding: 0;
+    }
+
+    .display-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+    }
+
+    .display-module {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: 100px minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
+    }
+
+    .display-module.wide {
+      grid-column: 1 / -1;
+    }
+
+    .display-tools {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 42px;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .display-tools .icon-button {
+      width: 42px;
+      height: 42px;
+    }
+
+    .probe-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 96px;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .display-module .field {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 138px minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
+    }
+
+    .display-module .field-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 2px;
+      margin-bottom: 0;
+    }
+
+    .probe-row input[type="number"] {
+      height: 36px;
+      padding: 0 10px;
+      text-align: right;
+    }
+
+    .card {
+      display: none;
+      box-shadow: none;
+      background: rgba(255, 255, 255, 0.62);
+      overflow: hidden;
+    }
+
+    .card button {
+      width: 100%;
+      min-height: 31px;
+      border: 0;
+      background: transparent;
+      padding: 7px 10px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      color: var(--ink);
+      font: 800 13px/1.12 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      cursor: pointer;
+      text-align: left;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+    }
+
+    .card .body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 180ms ease;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.34;
+      padding: 0 10px;
+    }
+
+    .card.open .body {
+      max-height: 62px;
+      padding: 0 10px 8px;
+      overflow: auto;
+      scrollbar-width: thin;
+    }
+
+    .footer-readout {
+      display: none;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .footer-actions {
+      display: grid;
+      grid-template-columns: 104px 1fr 1fr 44px;
+      gap: 12px;
+      margin-top: 0;
+      align-self: end;
+    }
+
+    .export-mode {
+      width: 100%;
+      height: 38px;
+      margin-bottom: 0;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .ghost-button {
+      height: 38px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.7);
+      font-size: 15px;
+      font-weight: 650;
+      white-space: nowrap;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+    }
+
+    .status {
+      display: none;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.35;
+      min-height: 30px;
+      white-space: nowrap;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+    }
+
+    .warn {
+      color: #9a4d00;
+      font-weight: 800;
+    }
+
+    body.modal-open main {
+      filter: blur(8px);
+      transform: scale(0.992);
+    }
+
+    .modal-layer {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 26px;
+      background: rgba(247, 245, 239, 0.42);
+      z-index: 20;
+    }
+
+    body.modal-open .modal-layer {
+      display: grid;
+    }
+
+    .modal-card {
+      width: min(720px, 88vw);
+      max-height: min(580px, 84vh);
+      overflow: auto;
+      border: 1px solid rgba(35, 47, 57, 0.18);
+      border-radius: 10px;
+      background: rgba(255, 255, 252, 0.96);
+      box-shadow: 0 24px 80px rgba(22, 28, 35, 0.22);
+      padding: 22px;
+      color: var(--ink);
+    }
+
+    .modal-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: start;
+      margin-bottom: 14px;
+    }
+
+    .modal-head h3 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.1;
+    }
+
+    .modal-card dl {
+      display: grid;
+      grid-template-columns: 132px minmax(0, 1fr);
+      gap: 9px 14px;
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.45;
+    }
+
+    .modal-card dt {
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    .modal-card dd {
+      margin: 0;
+      font-weight: 650;
+      overflow-x: auto;
+      scrollbar-width: thin;
+    }
+
+    .info-disclosure {
+      grid-column: 1 / -1;
+      border: 1px solid rgba(35, 47, 57, 0.14);
+      border-radius: 8px;
+      background: rgba(248, 248, 244, 0.72);
+      margin-top: 4px;
+      overflow: hidden;
+    }
+
+    .info-disclosure summary {
+      cursor: pointer;
+      padding: 10px 12px;
+      font-weight: 900;
+      color: var(--ink);
+    }
+
+    .info-table-wrap {
+      max-height: 190px;
+      overflow: auto;
+      padding: 0 12px 12px;
+    }
+
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .info-table th,
+    .info-table td {
+      border-bottom: 1px solid rgba(35, 47, 57, 0.12);
+      padding: 6px 7px;
+      text-align: left;
+      vertical-align: top;
+      white-space: nowrap;
+      max-width: 360px;
+      overflow-x: auto;
+      scrollbar-width: thin;
+    }
+
+    .info-table th {
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    @media (max-width: 1120px) {
+      main {
+        min-width: 960px;
+        grid-template-columns: minmax(0, 1fr) 392px;
+        padding: 14px;
+        gap: 12px;
+      }
+
+      .left {
+        grid-template-rows: 66px minmax(0, 1fr) 88px;
+        gap: 12px;
+      }
+
+      .side-head h2 { font-size: 22px; }
+      .readout-strip { gap: 8px; padding: 10px; }
+      .metric { height: 68px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        transition: none !important;
+        animation: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main id="stage">
+    <section class="left">
+      <div class="title-row">
+        <div>
+          <h1 id="title">酸碱中和滴定曲线</h1>
+          <div class="subtitle" id="subtitle">统一酸碱平衡求解 · pH 曲线与双曲线同步计算</div>
+        </div>
+      </div>
+
+      <div class="chart-panel">
+        <canvas id="chart" aria-label="滴定曲线图"></canvas>
+        <div class="chart-badge" id="chartBadge"><span class="dot"></span><span>pH-V</span></div>
+      </div>
+
+      <div class="readout-strip">
+        <div class="metric">
+          <div class="label" id="vMetricLabel">当前滴定体积</div>
+          <div class="value" id="vRead">0.00 mL</div>
+        </div>
+        <div class="metric">
+          <div class="label" id="phMetricLabel">当前 pH</div>
+          <div class="value" id="phRead">--</div>
+        </div>
+        <div class="metric">
+          <div class="label" id="eqMetricLabel">等当点</div>
+          <div class="value" id="eqRead">--</div>
+        </div>
+        <div class="metric">
+          <div class="label" id="indicatorMetricLabel">指示剂</div>
+          <div class="value" id="indicatorRead">--</div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="side-panel">
+      <div class="side-head">
+        <h2 id="panelTitle">滴定设置</h2>
+        <div class="field utility-field">
+          <label for="languageSelect" id="languageLabel">语言</label>
+          <select id="languageSelect">
+            <option value="zhHans">简体中文</option>
+            <option value="zhHant">繁體中文</option>
+            <option value="en">English</option>
+            <option value="ja">日本語</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-scroll">
+        <div class="section-group">
+          <div class="section-title" id="titrantSectionTitle">标准溶液</div>
+          <div class="field reagent-field">
+            <label for="titrant" id="titrantLabel">标准溶液种类</label>
+            <select id="titrant"></select>
+            <div class="custom-fields" id="customTitrantFields">
+              <input id="customTitrantName" type="text" value="HA" aria-label="自定义标准溶液名称" />
+              <select id="customTitrantType" aria-label="自定义标准溶液类型">
+                <option value="acid">酸</option>
+                <option value="base">碱</option>
+              </select>
+              <input id="customTitrantK" type="number" min="1e-14" max="10" step="any" value="1e-5" aria-label="自定义标准溶液K值" />
+            </div>
+            <div class="k-line" id="titrantK">K：--</div>
+          </div>
+
+          <div class="two-col">
+          <div class="field">
+            <label for="titrantConc" id="titrantConcLabel">浓度 / mol L⁻¹</label>
+            <input id="titrantConc" type="number" min="0.0001" max="5" step="0.01" value="0.1000" />
+          </div>
+          <div class="field">
+            <label for="maxVolume" id="maxVolumeLabel">最大体积 / mL</label>
+            <input id="maxVolume" type="number" min="5" max="300" step="5" value="200" />
+          </div>
+          </div>
+        </div>
+
+        <div class="section-group">
+          <div class="section-title" id="analyteSectionTitle">待测液</div>
+          <div class="field">
+            <label for="analyte" id="analyteLabel">待测液种类</label>
+            <select id="analyte"></select>
+            <div class="custom-fields" id="customAnalyteFields">
+              <input id="customAnalyteName" type="text" value="B" aria-label="自定义待测液名称" />
+              <select id="customAnalyteType" aria-label="自定义待测液类型">
+                <option value="acid">酸</option>
+                <option value="base" selected>碱</option>
+              </select>
+              <input id="customAnalyteK" type="number" min="1e-14" max="10" step="any" value="1e-5" aria-label="自定义待测液K值" />
+            </div>
+            <div class="k-line" id="analyteK">K：--</div>
+          </div>
+
+          <div class="two-col">
+          <div class="field">
+            <label for="analyteConc" id="analyteConcLabel">浓度 / mol L⁻¹</label>
+            <input id="analyteConc" type="number" min="0.0001" max="5" step="0.01" value="0.1000" />
+          </div>
+          <div class="field">
+            <label for="analyteVol" id="analyteVolLabel">体积 / mL</label>
+            <input id="analyteVol" type="number" min="1" max="250" step="0.01" value="25.00" />
+          </div>
+          </div>
+        </div>
+
+        <div class="section-group">
+          <div class="section-title" id="indicatorSectionTitle">指示剂</div>
+          <div class="two-col">
+            <div class="field">
+              <label for="indicator" id="indicator1Label">指示剂 1</label>
+              <select id="indicator"></select>
+            </div>
+            <div class="field">
+              <label for="indicator2" id="indicator2Label">指示剂 2</label>
+              <select id="indicator2"></select>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-group">
+          <div class="section-title" id="displaySectionTitle">显示设置</div>
+          <div class="display-grid">
+            <div class="display-module">
+              <div class="subsection-title" id="imageModuleTitle">图片</div>
+              <div class="display-tools">
+                <div class="mode-control" aria-label="图形显示模式">
+                  <button type="button" data-mode="ph" class="active">pH</button>
+                  <button type="button" data-mode="both">双曲线</button>
+                </div>
+                <button class="icon-button" id="fullBtn" type="button" title="全屏" aria-label="全屏">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M8 3H5a2 2 0 0 0-2 2v3"></path><path d="M16 3h3a2 2 0 0 1 2 2v3"></path><path d="M8 21H5a2 2 0 0 1-2-2v-3"></path><path d="M16 21h3a2 2 0 0 0 2-2v-3"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="display-module">
+              <div class="field">
+                <div class="field-head">
+                  <label for="probe" id="probeLabel">读数模块 / mL</label>
+                  <label class="checkline"><input id="probeToggle" type="checkbox" checked /><span id="probeToggleLabel">启用</span></label>
+                </div>
+                <div class="probe-row">
+                  <input id="probe" type="range" min="0" max="200" step="0.1" value="0" />
+                  <input id="probeNumber" type="number" min="0" max="200" step="0.1" value="0.0" aria-label="读数体积输入 / mL" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card open">
+          <button type="button">统一求解器 <span>⌄</span></button>
+          <div class="body">每个体积点先合并待测液与标准溶液的物料量，再用质量守恒、电荷守恒、Ka/Kb 与 Kw 构造同一条电中性方程，通过二分求解 pH。</div>
+        </div>
+
+        <div class="card">
+          <button type="button">等当点识别 <span>⌄</span></button>
+          <div class="body">程序由反应容量自动估算理论等当体积；碳酸盐、亚硫酸盐、磷酸盐等多元体系会显示多个等当点，并叠加在曲线上。</div>
+        </div>
+
+        <div class="card">
+          <button type="button">指示剂色带 <span>⌄</span></button>
+          <div class="body">色带的上下边界来自指示剂真实变色范围，例如酚酞 8.2-10.0、甲基橙 3.1-4.4；渐变位置按 pH 坐标实时换算。</div>
+        </div>
+      </div>
+
+      <div class="footer-actions">
+        <select id="exportMode" class="export-mode" aria-label="导出方式"></select>
+        <button class="ghost-button" id="exportSvg" type="button">导出 SVG</button>
+        <button class="ghost-button" id="exportPng" type="button">导出 PNG</button>
+        <button class="ghost-button" id="infoBtn" type="button">说明</button>
+        <div class="status" id="status">等待计算。</div>
+      </div>
+    </aside>
+  </main>
+
+  <div class="modal-layer" id="infoLayer" aria-hidden="true">
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="infoTitle">
+      <div class="modal-head">
+        <h3 id="infoTitle">说明</h3>
+        <button class="icon-button" id="infoClose" type="button" aria-label="关闭">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+            <path d="M18 6 6 18"></path><path d="m6 6 12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <dl id="infoContent"></dl>
+    </section>
+  </div>
+
+  <script>
+    "use strict";
+
+    const KW = 1e-14;
+    const LOG10 = Math.log(10);
+
+    const families = {
+      chloride: { name: "Cl⁻", charges: [-1], pKas: [] },
+      nitrate: { name: "NO₃⁻", charges: [-1], pKas: [] },
+      perchlorate: { name: "ClO₄⁻", charges: [-1], pKas: [] },
+      sodium: { name: "Na⁺", charges: [1], pKas: [] },
+      potassium: { name: "K⁺", charges: [1], pKas: [] },
+      barium: { name: "Ba²⁺", charges: [2], pKas: [] },
+      calcium: { name: "Ca²⁺", charges: [2], pKas: [] },
+      acetate: { name: "CH₃COOH / CH₃COO⁻", charges: [0, -1], pKas: [4.756] },
+      formate: { name: "HCOOH / HCOO⁻", charges: [0, -1], pKas: [3.745] },
+      fluoride: { name: "HF / F⁻", charges: [0, -1], pKas: [3.17] },
+      cyanide: { name: "HCN / CN⁻", charges: [0, -1], pKas: [9.21] },
+      nitrite: { name: "HNO₂ / NO₂⁻", charges: [0, -1], pKas: [3.35] },
+      hypochlorite: { name: "HClO / ClO⁻", charges: [0, -1], pKas: [7.53] },
+      benzoate: { name: "C₆H₅COOH / C₆H₅COO⁻", charges: [0, -1], pKas: [4.20] },
+      lactate: { name: "C₃H₆O₃ / C₃H₅O₃⁻", charges: [0, -1], pKas: [3.86] },
+      oxalate: { name: "H₂C₂O₄ / HC₂O₄⁻ / C₂O₄²⁻", charges: [0, -1, -2], pKas: [1.25, 4.27] },
+      citrate: { name: "H₃Cit / H₂Cit⁻ / HCit²⁻ / Cit³⁻", charges: [0, -1, -2, -3], pKas: [3.13, 4.76, 6.40] },
+      borate: { name: "H₃BO₃ / B(OH)₄⁻", charges: [0, -1], pKas: [9.24] },
+      ammonium: { name: "NH₄⁺ / NH₃", charges: [1, 0], pKas: [9.25] },
+      methylammonium: { name: "CH₃NH₃⁺ / CH₃NH₂", charges: [1, 0], pKas: [10.64] },
+      ethylammonium: { name: "C₂H₅NH₃⁺ / C₂H₅NH₂", charges: [1, 0], pKas: [10.75] },
+      anilinium: { name: "C₆H₅NH₃⁺ / C₆H₅NH₂", charges: [1, 0], pKas: [4.60] },
+      carbonate: { name: "H₂CO₃ / HCO₃⁻ / CO₃²⁻", charges: [0, -1, -2], pKas: [6.35, 10.33] },
+      sulfite: { name: "H₂SO₃ / HSO₃⁻ / SO₃²⁻", charges: [0, -1, -2], pKas: [1.81, 7.20] },
+      phosphate: { name: "H₃PO₄ / H₂PO₄⁻ / HPO₄²⁻ / PO₄³⁻", charges: [0, -1, -2, -3], pKas: [2.15, 7.20, 12.35] }
+    };
+
+    const substances = {
+      HCl: { label: "HCl", className: "强酸", acidCapacity: 1, baseCapacity: 0, components: [{ family: "chloride", stoich: 1 }] },
+      HNO3: { label: "HNO₃", className: "强酸", acidCapacity: 1, baseCapacity: 0, components: [{ family: "nitrate", stoich: 1 }] },
+      HClO4: { label: "HClO₄", className: "强酸", acidCapacity: 1, baseCapacity: 0, components: [{ family: "perchlorate", stoich: 1 }] },
+      NaOH: { label: "NaOH", className: "强碱", acidCapacity: 0, baseCapacity: 1, components: [{ family: "sodium", stoich: 1 }] },
+      KOH: { label: "KOH", className: "强碱", acidCapacity: 0, baseCapacity: 1, components: [{ family: "potassium", stoich: 1 }] },
+      BaOH2: { label: "Ba(OH)₂", className: "强碱", acidCapacity: 0, baseCapacity: 2, components: [{ family: "barium", stoich: 1 }] },
+      CaOH2: { label: "Ca(OH)₂", className: "强碱", acidCapacity: 0, baseCapacity: 2, components: [{ family: "calcium", stoich: 1 }] },
+      AcOH: { label: "CH₃COOH", className: "弱酸", acidCapacity: 1, baseCapacity: 0, components: [{ family: "acetate", stoich: 1 }] },
+      HCOOH: { label: "HCOOH", className: "弱酸", acidCapacity: 1, baseCapacity: 0, components: [{ family: "formate", stoich: 1 }] },
+      HF: { label: "HF", className: "弱酸", acidCapacity: 1, baseCapacity: 0, components: [{ family: "fluoride", stoich: 1 }] },
+      HCN: { label: "HCN", className: "弱酸", acidCapacity: 1, baseCapacity: 0, components: [{ family: "cyanide", stoich: 1 }] },
+      HNO2: { label: "HNO₂", className: "弱酸", acidCapacity: 1, baseCapacity: 0, components: [{ family: "nitrite", stoich: 1 }] },
+      HClO: { label: "HClO", className: "弱酸", acidCapacity: 1, baseCapacity: 0, components: [{ family: "hypochlorite", stoich: 1 }] },
+      BenzoicAcid: { label: "C₆H₅COOH", className: "弱酸", acidCapacity: 1, baseCapacity: 0, components: [{ family: "benzoate", stoich: 1 }] },
+      LacticAcid: { label: "乳酸", formula: "C₃H₆O₃", labels: { zhHans: "乳酸", zhHant: "乳酸", en: "Lactic acid", ja: "乳酸" }, className: "弱酸", acidCapacity: 1, baseCapacity: 0, components: [{ family: "lactate", stoich: 1 }] },
+      OxalicAcid: { label: "H₂C₂O₄", className: "弱酸", acidCapacity: 2, baseCapacity: 0, components: [{ family: "oxalate", stoich: 1 }] },
+      CitricAcid: { label: "柠檬酸", formula: "C₆H₈O₇", labels: { zhHans: "柠檬酸", zhHant: "檸檬酸", en: "Citric acid", ja: "クエン酸" }, className: "弱酸", acidCapacity: 3, baseCapacity: 0, components: [{ family: "citrate", stoich: 1 }] },
+      BoricAcid: { label: "H₃BO₃", className: "弱酸", acidCapacity: 1, baseCapacity: 0, components: [{ family: "borate", stoich: 1 }] },
+      NH3: { label: "NH₃·H₂O", className: "弱碱", acidCapacity: 0, baseCapacity: 1, components: [{ family: "ammonium", stoich: 1 }] },
+      Methylamine: { label: "CH₃NH₂", className: "弱碱", acidCapacity: 0, baseCapacity: 1, components: [{ family: "methylammonium", stoich: 1 }] },
+      Ethylamine: { label: "C₂H₅NH₂", className: "弱碱", acidCapacity: 0, baseCapacity: 1, components: [{ family: "ethylammonium", stoich: 1 }] },
+      Aniline: { label: "C₆H₅NH₂", className: "弱碱", acidCapacity: 0, baseCapacity: 1, components: [{ family: "anilinium", stoich: 1 }] },
+      Na2CO3: { label: "Na₂CO₃", className: "盐", acidCapacity: 0, baseCapacity: 2, components: [{ family: "carbonate", stoich: 1 }, { family: "sodium", stoich: 2 }] },
+      NaHCO3: { label: "NaHCO₃", className: "盐", acidCapacity: 1, baseCapacity: 1, components: [{ family: "carbonate", stoich: 1 }, { family: "sodium", stoich: 1 }] },
+      NaNO2: { label: "NaNO₂", className: "盐", acidCapacity: 0, baseCapacity: 1, components: [{ family: "nitrite", stoich: 1 }, { family: "sodium", stoich: 1 }] },
+      NaClO: { label: "NaClO", className: "盐", acidCapacity: 0, baseCapacity: 1, components: [{ family: "hypochlorite", stoich: 1 }, { family: "sodium", stoich: 1 }] },
+      NaF: { label: "NaF", className: "盐", acidCapacity: 0, baseCapacity: 1, components: [{ family: "fluoride", stoich: 1 }, { family: "sodium", stoich: 1 }] },
+      NaHSO3: { label: "NaHSO₃", className: "盐", acidCapacity: 1, baseCapacity: 1, components: [{ family: "sulfite", stoich: 1 }, { family: "sodium", stoich: 1 }] },
+      Na2HPO4: { label: "Na₂HPO₄", className: "盐", acidCapacity: 1, baseCapacity: 2, components: [{ family: "phosphate", stoich: 1 }, { family: "sodium", stoich: 2 }] },
+      NaH2PO4: { label: "NaH₂PO₄", className: "盐", acidCapacity: 2, baseCapacity: 1, components: [{ family: "phosphate", stoich: 1 }, { family: "sodium", stoich: 1 }] },
+      AcONa: { label: "CH₃COONa", className: "盐", acidCapacity: 0, baseCapacity: 1, components: [{ family: "acetate", stoich: 1 }, { family: "sodium", stoich: 1 }] },
+      SodiumBenzoate: { label: "C₆H₅COONa", className: "盐", acidCapacity: 0, baseCapacity: 1, components: [{ family: "benzoate", stoich: 1 }, { family: "sodium", stoich: 1 }] },
+      SodiumOxalate: { label: "Na₂C₂O₄", className: "盐", acidCapacity: 0, baseCapacity: 2, components: [{ family: "oxalate", stoich: 1 }, { family: "sodium", stoich: 2 }] },
+      TrisodiumCitrate: { label: "Na₃Cit", className: "盐", acidCapacity: 0, baseCapacity: 3, components: [{ family: "citrate", stoich: 1 }, { family: "sodium", stoich: 3 }] },
+      NH4Cl: { label: "NH₄Cl", className: "盐", acidCapacity: 1, baseCapacity: 0, components: [{ family: "ammonium", stoich: 1 }, { family: "chloride", stoich: 1 }] },
+      NH4NO3: { label: "NH₄NO₃", className: "盐", acidCapacity: 1, baseCapacity: 0, components: [{ family: "ammonium", stoich: 1 }, { family: "nitrate", stoich: 1 }] }
+    };
+
+    const indicators = {
+      none: { label: "无", labels: { zhHans: "不显示", zhHant: "不顯示", en: "Hidden", ja: "非表示" }, low: null, high: null, acid: "#ffffff", base: "#ffffff" },
+      methylViolet: { label: "甲基紫", labels: { zhHans: "甲基紫", zhHant: "甲基紫", en: "Methyl violet", ja: "メチルバイオレット" }, low: 0.0, high: 1.6, acid: "#f0c425", base: "#6542a6" },
+      cresolRed1: { label: "甲酚红 I", labels: { zhHans: "甲酚红 I", zhHant: "甲酚紅 I", en: "Cresol red I", ja: "クレゾールレッド I" }, low: 0.2, high: 1.8, acid: "#c83232", base: "#f3cf25" },
+      methylOrange: { label: "甲基橙", labels: { zhHans: "甲基橙", zhHant: "甲基橙", en: "Methyl orange", ja: "メチルオレンジ" }, low: 3.1, high: 4.4, acid: "#e3392e", base: "#ffd31a" },
+      bromophenolBlue: { label: "溴酚蓝", labels: { zhHans: "溴酚蓝", zhHant: "溴酚藍", en: "Bromophenol blue", ja: "ブロモフェノールブルー" }, low: 3.0, high: 4.6, acid: "#f2d94e", base: "#4668d7" },
+      congoRed: { label: "刚果红", labels: { zhHans: "刚果红", zhHant: "剛果紅", en: "Congo red", ja: "コンゴーレッド" }, low: 3.0, high: 5.2, acid: "#3655b7", base: "#d64545" },
+      methylRed: { label: "甲基红", labels: { zhHans: "甲基红", zhHant: "甲基紅", en: "Methyl red", ja: "メチルレッド" }, low: 4.4, high: 6.2, acid: "#d92828", base: "#f5dc35" },
+      bromocresolGreen: { label: "溴甲酚绿", labels: { zhHans: "溴甲酚绿", zhHant: "溴甲酚綠", en: "Bromocresol green", ja: "ブロモクレゾールグリーン" }, low: 3.8, high: 5.4, acid: "#ffd63d", base: "#1f65c8" },
+      chlorophenolRed: { label: "氯酚红", labels: { zhHans: "氯酚红", zhHant: "氯酚紅", en: "Chlorophenol red", ja: "クロロフェノールレッド" }, low: 4.8, high: 6.4, acid: "#f0d642", base: "#d33f43" },
+      bromocresolPurple: { label: "溴甲酚紫", labels: { zhHans: "溴甲酚紫", zhHant: "溴甲酚紫", en: "Bromocresol purple", ja: "ブロモクレゾールパープル" }, low: 5.2, high: 6.8, acid: "#f0d33b", base: "#7b4ab8" },
+      bromothymolBlue: { label: "溴百里酚蓝", labels: { zhHans: "溴百里酚蓝", zhHant: "溴百里酚藍", en: "Bromothymol blue", ja: "ブロモチモールブルー" }, low: 6.0, high: 7.6, acid: "#f1d032", base: "#2178c9" },
+      neutralRed: { label: "中性红", labels: { zhHans: "中性红", zhHant: "中性紅", en: "Neutral red", ja: "ニュートラルレッド" }, low: 6.8, high: 8.0, acid: "#d93442", base: "#e8c94a" },
+      phenolRed: { label: "酚红", labels: { zhHans: "酚红", zhHant: "酚紅", en: "Phenol red", ja: "フェノールレッド" }, low: 6.8, high: 8.4, acid: "#f1d13a", base: "#d7383d" },
+      cresolRed2: { label: "甲酚红 II", labels: { zhHans: "甲酚红 II", zhHant: "甲酚紅 II", en: "Cresol red II", ja: "クレゾールレッド II" }, low: 7.2, high: 8.8, acid: "#f2d33c", base: "#d33d40" },
+      phenolphthalein: { label: "酚酞", labels: { zhHans: "酚酞", zhHant: "酚酞", en: "Phenolphthalein", ja: "フェノールフタレイン" }, low: 8.2, high: 10.0, acid: "#ffffff", base: "#f04a8a" },
+      thymolBlue1: { label: "百里酚蓝 I", labels: { zhHans: "百里酚蓝 I", zhHant: "百里酚藍 I", en: "Thymol blue I", ja: "チモールブルー I" }, low: 1.2, high: 2.8, acid: "#d92525", base: "#f3cf25" },
+      thymolBlue2: { label: "百里酚蓝 II", labels: { zhHans: "百里酚蓝 II", zhHant: "百里酚藍 II", en: "Thymol blue II", ja: "チモールブルー II" }, low: 8.0, high: 9.6, acid: "#f3cf25", base: "#1958b7" },
+      alizarinYellowR: { label: "茜素黄 R", labels: { zhHans: "茜素黄 R", zhHant: "茜素黃 R", en: "Alizarin yellow R", ja: "アリザリンイエロー R" }, low: 10.1, high: 12.0, acid: "#efd33a", base: "#cc3b3b" },
+      litmus: { label: "石蕊", labels: { zhHans: "石蕊", zhHant: "石蕊", en: "Litmus", ja: "リトマス" }, low: 4.5, high: 8.3, acid: "#d64654", base: "#3755c8" }
+    };
+
+    const lastUpdated = "2026-07-02";
+
+    const translations = {
+      zhHans: {
+        pageTitle: "酸碱中和滴定曲线",
+        subtitle: (analyteClass, volume, titrantClass) => `${analyteClass}待测液 ${volume} mL · ${titrantClass}标准溶液 · 所有曲线点由电荷守恒求解`,
+        title: (ct, titrant, ca, analyte) => `${ct} mol/L ${titrant} 滴定 ${ca} mol/L ${analyte}`,
+        titrate: "滴定",
+        panelTitle: "滴定设置",
+        language: "语言",
+        titrant: "标准溶液",
+        titrantKind: "标准溶液种类",
+        analyte: "待测液",
+        analyteKind: "待测液种类",
+        custom: "自定义",
+        acid: "酸",
+        base: "碱",
+        customName: "名称",
+        customK: "K值",
+        concentration: "浓度 / mol L⁻¹",
+        maxVolume: "最大体积 / mL",
+        volume: "体积 / mL",
+        indicator1: "指示剂 1",
+        indicator2: "指示剂 2",
+        indicatorSettings: "指示剂",
+        displaySettings: "显示设置",
+        imageSettings: "图片",
+        probe: "读数模块 / mL",
+        probeOn: "启用",
+        probeOff: "取消",
+        vMetric: "当前滴定体积",
+        phMetric: "当前 pH",
+        eqMetric: "等当点",
+        indicatorMetric: "指示剂",
+        phMode: "pH",
+        bothMode: "双曲线",
+        firstDerivative: "一阶导",
+        exportSvg: "导出 SVG",
+        exportPng: "导出 PNG",
+        exportDownload: "默认下载",
+        exportChoose: "选择位置",
+        info: "说明",
+        acidBaseTable: "酸碱盐及其 K 值",
+        indicatorTable: "指示剂信息",
+        tableName: "名称",
+        tableType: "类型",
+        tableK: "K值",
+        tableRange: "变色范围",
+        tableColors: "颜色",
+        waiting: "等待计算。",
+        no: "无",
+        complete: (n) => `${n} 个体积点完成计算。`,
+        fallback: (n) => `${n} 个点使用邻近稳定值。`,
+        outOfRange: "部分等当点超过当前横轴范围。",
+        strongAcidK: "K：强酸，按完全解离处理",
+        strongBaseK: "K：强碱，按完全解离处理",
+        neutralK: "K：不参与弱酸弱碱平衡",
+        kPrefix: "K：",
+        analyteClassSuffix: "",
+        titrantClassSuffix: "",
+        close: "关闭",
+        infoRows: {
+          makers: ["制作者", "Daniel@猫猫化学团队；Codex；ChatGPT"],
+          sources: ["数据来源", "酸碱平衡常数与 Kw 参考 CRC Handbook of Chemistry and Physics、Lange's Handbook of Chemistry、NIST Chemistry WebBook 及通用分析化学教材；指示剂变色范围参考标准分析化学指示剂表。"],
+          model: ["计算模型", "质量守恒、电荷守恒、酸碱分布分数、Kw=1.0×10^-14（25 °C）与数值二分求解；一阶导由计算点数值微分得到。"],
+          points: ["点数量", (n) => `${n} 个体积点`],
+          updated: ["最后更新时间", lastUpdated],
+          version: ["版本", "acid-base-titration-simulator V1.0"],
+          license: ["开源说明", "可用于教学展示、课堂修改与非商业传播；再发布时请保留制作者与数据来源说明。"]
+        }
+      },
+      zhHant: {
+        pageTitle: "酸鹼中和滴定曲線",
+        subtitle: (analyteClass, volume, titrantClass) => `${analyteClass}待測液 ${volume} mL · ${titrantClass}標準溶液 · 所有曲線點由電荷守恆求解`,
+        title: (ct, titrant, ca, analyte) => `${ct} mol/L ${titrant} 滴定 ${ca} mol/L ${analyte}`,
+        titrate: "滴定",
+        panelTitle: "滴定設定",
+        language: "語言",
+        titrant: "標準溶液",
+        titrantKind: "標準溶液種類",
+        analyte: "待測液",
+        analyteKind: "待測液種類",
+        custom: "自訂",
+        acid: "酸",
+        base: "鹼",
+        customName: "名稱",
+        customK: "K值",
+        concentration: "濃度 / mol L⁻¹",
+        maxVolume: "最大體積 / mL",
+        volume: "體積 / mL",
+        indicator1: "指示劑 1",
+        indicator2: "指示劑 2",
+        indicatorSettings: "指示劑",
+        displaySettings: "顯示設定",
+        imageSettings: "圖片",
+        probe: "讀數模組 / mL",
+        probeOn: "啟用",
+        probeOff: "取消",
+        vMetric: "當前滴定體積",
+        phMetric: "當前 pH",
+        eqMetric: "等當點",
+        indicatorMetric: "指示劑",
+        phMode: "pH",
+        bothMode: "雙曲線",
+        firstDerivative: "一階導",
+        exportSvg: "匯出 SVG",
+        exportPng: "匯出 PNG",
+        exportDownload: "預設下載",
+        exportChoose: "選擇位置",
+        info: "說明",
+        acidBaseTable: "酸鹼鹽及其 K 值",
+        indicatorTable: "指示劑資訊",
+        tableName: "名稱",
+        tableType: "類型",
+        tableK: "K值",
+        tableRange: "變色範圍",
+        tableColors: "顏色",
+        waiting: "等待計算。",
+        no: "無",
+        complete: (n) => `${n} 個體積點完成計算。`,
+        fallback: (n) => `${n} 個點使用鄰近穩定值。`,
+        outOfRange: "部分等當點超過目前橫軸範圍。",
+        strongAcidK: "K：強酸，按完全解離處理",
+        strongBaseK: "K：強鹼，按完全解離處理",
+        neutralK: "K：不參與弱酸弱鹼平衡",
+        kPrefix: "K：",
+        close: "關閉",
+        infoRows: {
+          makers: ["製作者", "Daniel@貓貓化學團隊；Codex；ChatGPT"],
+          sources: ["資料來源", "酸鹼平衡常數與 Kw 參考 CRC Handbook of Chemistry and Physics、Lange's Handbook of Chemistry、NIST Chemistry WebBook 及通用分析化學教材；指示劑變色範圍參考標準分析化學指示劑表。"],
+          model: ["計算模型", "質量守恆、電荷守恆、酸鹼分佈分數、Kw=1.0×10^-14（25 °C）與數值二分求解；一階導由計算點數值微分得到。"],
+          points: ["點數量", (n) => `${n} 個體積點`],
+          updated: ["最後更新時間", lastUpdated],
+          version: ["版本", "acid-base-titration-simulator V1.0"],
+          license: ["開源說明", "可用於教學展示、課堂修改與非商業傳播；再發布時請保留製作者與資料來源說明。"]
+        }
+      },
+      en: {
+        pageTitle: "Acid-Base Titration Curve",
+        subtitle: (analyteClass, volume, titrantClass) => `${analyteClass} analyte ${volume} mL · ${titrantClass} titrant · every point solved by charge balance`,
+        title: (ct, titrant, ca, analyte) => `${ct} mol/L ${titrant} titrates ${ca} mol/L ${analyte}`,
+        titrate: "titrates",
+        panelTitle: "Titration Settings",
+        language: "Language",
+        titrant: "Titrant",
+        titrantKind: "Titrant type",
+        analyte: "Analyte",
+        analyteKind: "Analyte type",
+        custom: "Custom",
+        acid: "Acid",
+        base: "Base",
+        customName: "Name",
+        customK: "K",
+        concentration: "Concentration / mol L⁻¹",
+        maxVolume: "Max volume / mL",
+        volume: "Volume / mL",
+        indicator1: "Indicator 1",
+        indicator2: "Indicator 2",
+        indicatorSettings: "Indicators",
+        displaySettings: "Display",
+        imageSettings: "Image",
+        probe: "Readout / mL",
+        probeOn: "On",
+        probeOff: "Off",
+        vMetric: "Titrant volume",
+        phMetric: "Current pH",
+        eqMetric: "Equivalence",
+        indicatorMetric: "Indicator",
+        phMode: "pH",
+        bothMode: "Dual",
+        firstDerivative: "First derivative",
+        exportSvg: "Export SVG",
+        exportPng: "Export PNG",
+        exportDownload: "Download",
+        exportChoose: "Choose path",
+        info: "Info",
+        acidBaseTable: "Acids, bases, salts and K values",
+        indicatorTable: "Indicator data",
+        tableName: "Name",
+        tableType: "Type",
+        tableK: "K value",
+        tableRange: "Transition range",
+        tableColors: "Colors",
+        waiting: "Waiting.",
+        no: "None",
+        complete: (n) => `${n} volume points calculated.`,
+        fallback: (n) => `${n} points used a neighboring stable value.`,
+        outOfRange: "Some equivalence points exceed the current x-axis range.",
+        strongAcidK: "K: strong acid, treated as fully dissociated",
+        strongBaseK: "K: strong base, treated as fully dissociated",
+        neutralK: "K: no weak acid/base equilibrium",
+        kPrefix: "K: ",
+        close: "Close",
+        infoRows: {
+          makers: ["Creators", "Daniel@Maomao Chemistry Team; Codex; ChatGPT"],
+          sources: ["Data sources", "Acid/base equilibrium constants and Kw are based on CRC Handbook of Chemistry and Physics, Lange's Handbook of Chemistry, NIST Chemistry WebBook, and standard analytical chemistry textbooks; indicator transition ranges follow standard analytical chemistry indicator tables."],
+          model: ["Model", "Mass balance, charge balance, acid-base distribution fractions, Kw=1.0×10^-14 at 25 °C, and bisection solving; the first derivative is numerically differentiated from calculated points."],
+          points: ["Point count", (n) => `${n} volume points`],
+          updated: ["Last updated", lastUpdated],
+          version: ["Version", "acid-base-titration-simulator V1.0"],
+          license: ["Open-source note", "Available for teaching demos, classroom modification, and non-commercial sharing; keep creator and data-source notes when redistributing."]
+        }
+      },
+      ja: {
+        pageTitle: "酸塩基中和滴定曲線",
+        subtitle: (analyteClass, volume, titrantClass) => `${analyteClass}試料 ${volume} mL · ${titrantClass}標準液 · すべての点を電荷収支で計算`,
+        title: (ct, titrant, ca, analyte) => `${ct} mol/L ${titrant} で ${ca} mol/L ${analyte} を滴定`,
+        titrate: "滴定",
+        panelTitle: "滴定設定",
+        language: "言語",
+        titrant: "標準液",
+        titrantKind: "標準液の種類",
+        analyte: "試料",
+        analyteKind: "試料の種類",
+        custom: "カスタム",
+        acid: "酸",
+        base: "塩基",
+        customName: "名称",
+        customK: "K値",
+        concentration: "濃度 / mol L⁻¹",
+        maxVolume: "最大体積 / mL",
+        volume: "体積 / mL",
+        indicator1: "指示薬 1",
+        indicator2: "指示薬 2",
+        indicatorSettings: "指示薬",
+        displaySettings: "表示設定",
+        imageSettings: "画像",
+        probe: "読取モジュール / mL",
+        probeOn: "有効",
+        probeOff: "オフ",
+        vMetric: "現在の滴定体積",
+        phMetric: "現在の pH",
+        eqMetric: "当量点",
+        indicatorMetric: "指示薬",
+        phMode: "pH",
+        bothMode: "二重曲線",
+        firstDerivative: "一次微分",
+        exportSvg: "SVG 出力",
+        exportPng: "PNG 出力",
+        exportDownload: "通常保存",
+        exportChoose: "場所選択",
+        info: "説明",
+        acidBaseTable: "酸・塩基・塩と K 値",
+        indicatorTable: "指示薬データ",
+        tableName: "名称",
+        tableType: "種類",
+        tableK: "K値",
+        tableRange: "変色域",
+        tableColors: "色",
+        waiting: "計算待ち。",
+        no: "なし",
+        complete: (n) => `${n} 個の体積点を計算しました。`,
+        fallback: (n) => `${n} 点で近傍の安定値を使用しました。`,
+        outOfRange: "一部の当量点が現在の x 軸範囲を超えています。",
+        strongAcidK: "K：強酸として完全解離で処理",
+        strongBaseK: "K：強塩基として完全解離で処理",
+        neutralK: "K：弱酸・弱塩基平衡なし",
+        kPrefix: "K：",
+        close: "閉じる",
+        infoRows: {
+          makers: ["制作者", "Daniel@猫猫化学チーム；Codex；ChatGPT"],
+          sources: ["データソース", "酸塩基平衡定数と Kw は CRC Handbook of Chemistry and Physics、Lange's Handbook of Chemistry、NIST Chemistry WebBook、および標準的な分析化学教科書を参照；指示薬の変色範囲は標準的な分析化学指示薬表に基づきます。"],
+          model: ["計算モデル", "質量収支、電荷収支、酸塩基分布分数、Kw=1.0×10^-14（25 °C）、二分法による数値解；一次微分は計算点から数値微分。"],
+          points: ["点数", (n) => `${n} 個の体積点`],
+          updated: ["最終更新", lastUpdated],
+          version: ["バージョン", "acid-base-titration-simulator V1.0"],
+          license: ["オープンソース説明", "授業デモ、教室内での改変、非商用共有に利用可能；再配布時は制作者とデータソースを残してください。"]
+        }
+      }
+    };
+
+    const classLabels = {
+      zhHans: { "强酸": "强酸", "强碱": "强碱", "弱酸": "弱酸", "弱碱": "弱碱", "盐": "盐" },
+      zhHant: { "强酸": "強酸", "强碱": "強鹼", "弱酸": "弱酸", "弱碱": "弱鹼", "盐": "鹽" },
+      en: { "强酸": "strong acid", "强碱": "strong base", "弱酸": "weak acid", "弱碱": "weak base", "盐": "salt" },
+      ja: { "强酸": "強酸", "强碱": "強塩基", "弱酸": "弱酸", "弱碱": "弱塩基", "盐": "塩" }
+    };
+
+    const els = {
+      chart: document.getElementById("chart"),
+      title: document.getElementById("title"),
+      subtitle: document.getElementById("subtitle"),
+      panelTitle: document.getElementById("panelTitle"),
+      languageSelect: document.getElementById("languageSelect"),
+      languageLabel: document.getElementById("languageLabel"),
+      titrant: document.getElementById("titrant"),
+      titrantSectionTitle: document.getElementById("titrantSectionTitle"),
+      customTitrantFields: document.getElementById("customTitrantFields"),
+      customTitrantName: document.getElementById("customTitrantName"),
+      customTitrantType: document.getElementById("customTitrantType"),
+      customTitrantK: document.getElementById("customTitrantK"),
+      titrantLabel: document.getElementById("titrantLabel"),
+      titrantConcLabel: document.getElementById("titrantConcLabel"),
+      titrantConc: document.getElementById("titrantConc"),
+      maxVolumeLabel: document.getElementById("maxVolumeLabel"),
+      maxVolume: document.getElementById("maxVolume"),
+      analyte: document.getElementById("analyte"),
+      analyteSectionTitle: document.getElementById("analyteSectionTitle"),
+      customAnalyteFields: document.getElementById("customAnalyteFields"),
+      customAnalyteName: document.getElementById("customAnalyteName"),
+      customAnalyteType: document.getElementById("customAnalyteType"),
+      customAnalyteK: document.getElementById("customAnalyteK"),
+      analyteLabel: document.getElementById("analyteLabel"),
+      titrantK: document.getElementById("titrantK"),
+      analyteK: document.getElementById("analyteK"),
+      analyteConcLabel: document.getElementById("analyteConcLabel"),
+      analyteConc: document.getElementById("analyteConc"),
+      analyteVolLabel: document.getElementById("analyteVolLabel"),
+      analyteVol: document.getElementById("analyteVol"),
+      indicatorSectionTitle: document.getElementById("indicatorSectionTitle"),
+      indicator1Label: document.getElementById("indicator1Label"),
+      indicator: document.getElementById("indicator"),
+      indicator2Label: document.getElementById("indicator2Label"),
+      indicator2: document.getElementById("indicator2"),
+      displaySectionTitle: document.getElementById("displaySectionTitle"),
+      imageModuleTitle: document.getElementById("imageModuleTitle"),
+      probeLabel: document.getElementById("probeLabel"),
+      probeToggle: document.getElementById("probeToggle"),
+      probeToggleLabel: document.getElementById("probeToggleLabel"),
+      probe: document.getElementById("probe"),
+      probeNumber: document.getElementById("probeNumber"),
+      vMetricLabel: document.getElementById("vMetricLabel"),
+      phMetricLabel: document.getElementById("phMetricLabel"),
+      eqMetricLabel: document.getElementById("eqMetricLabel"),
+      indicatorMetricLabel: document.getElementById("indicatorMetricLabel"),
+      vRead: document.getElementById("vRead"),
+      phRead: document.getElementById("phRead"),
+      eqRead: document.getElementById("eqRead"),
+      indicatorRead: document.getElementById("indicatorRead"),
+      status: document.getElementById("status"),
+      chartBadge: document.getElementById("chartBadge"),
+      exportMode: document.getElementById("exportMode"),
+      exportSvg: document.getElementById("exportSvg"),
+      exportPng: document.getElementById("exportPng"),
+      infoBtn: document.getElementById("infoBtn"),
+      infoLayer: document.getElementById("infoLayer"),
+      infoTitle: document.getElementById("infoTitle"),
+      infoClose: document.getElementById("infoClose"),
+      infoContent: document.getElementById("infoContent")
+    };
+
+    const ctx = els.chart.getContext("2d");
+    let state = {
+      mode: "ph",
+      lang: "zhHans",
+      probeEnabled: true,
+      points: [],
+      derivatives: [],
+      equivalence: [],
+      chartBoxes: [],
+      lastError: ""
+    };
+
+    function tr() {
+      return translations[state.lang] || translations.zhHans;
+    }
+
+    function classLabel(className) {
+      return (classLabels[state.lang] || classLabels.zhHans)[className] || className;
+    }
+
+    function indicatorName(indicator) {
+      return indicator.labels?.[state.lang] || indicator.label;
+    }
+
+    function substanceName(substance) {
+      const localized = substance.labels?.[state.lang] || substance.label;
+      if (!substance.formula) return localized;
+      const open = state.lang === "en" ? " (" : "（";
+      const close = state.lang === "en" ? ")" : "）";
+      return `${substance.formula}${open}${localized}${close}`;
+    }
+
+    const iconPaths = {
+      settings: '<path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"></path><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.04.04a2 2 0 0 1-2.83 2.83l-.04-.04A1.7 1.7 0 0 0 15 19.37a1.7 1.7 0 0 0-1 1.55V21a2 2 0 0 1-4 0v-.08a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.88.34l-.04.04a2 2 0 1 1-2.83-2.83l.04-.04A1.7 1.7 0 0 0 4.63 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 0 1 0-4h.08a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.88l-.04-.04a2 2 0 1 1 2.83-2.83l.04.04A1.7 1.7 0 0 0 9 4.63a1.7 1.7 0 0 0 1-1.55V3a2 2 0 0 1 4 0v.08a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.88-.34l.04-.04a2 2 0 1 1 2.83 2.83l-.04.04A1.7 1.7 0 0 0 19.37 9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 0 1 0 4h-.08a1.7 1.7 0 0 0-1.52 1Z"></path>',
+      language: '<path d="M5 8h8"></path><path d="M9 4v4"></path><path d="M4 14c3.5-1.4 6-4.2 7-8"></path><path d="M6 10c1.1 1.7 2.6 3 4.5 4"></path><path d="M14 20l4-9 4 9"></path><path d="M15.5 17h5"></path>',
+      titrant: '<path d="M9 3h6"></path><path d="M10 3v5l-4.8 8.4A3 3 0 0 0 7.8 21h8.4a3 3 0 0 0 2.6-4.6L14 8V3"></path><path d="M7.7 15h8.6"></path>',
+      analyte: '<path d="M12 2.5s6 6.5 6 11.1a6 6 0 0 1-12 0C6 9 12 2.5 12 2.5Z"></path><path d="M9.5 14.5a2.5 2.5 0 0 0 5 0"></path>',
+      type: '<path d="M4 6h16"></path><path d="M7 12h10"></path><path d="M10 18h4"></path>',
+      concentration: '<path d="M8 3v5l-3 7a4 4 0 0 0 3.7 5h6.6A4 4 0 0 0 19 15l-3-7V3"></path><path d="M9 3h6"></path><path d="M7 15h10"></path>',
+      volume: '<path d="M7 3h10"></path><path d="M8 3v17l4-2 4 2V3"></path><path d="M11 7h5"></path><path d="M11 11h5"></path><path d="M11 15h5"></path>',
+      indicator: '<path d="M14.5 4.5 19 9"></path><path d="m8 15 7.5-7.5a3.18 3.18 0 0 1 4.5 4.5L12.5 19.5a3.18 3.18 0 0 1-4.5-4.5Z"></path><path d="M7 19c-1.5 0-3-.8-3-2.2 0-1.7 2.2-3.4 3-4.8.8 1.4 3 3.1 3 4.8C10 18.2 8.5 19 7 19Z"></path>',
+      image: '<rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m8 13 2.5-2.5L15 15l1.5-1.5L21 18"></path><circle cx="8.5" cy="9.5" r="1.2"></circle>',
+      readout: '<path d="M4 17h16"></path><path d="M6 17a6 6 0 0 1 12 0"></path><path d="m12 13 3-5"></path><path d="M12 17h.01"></path>',
+      chart: '<path d="M4 19V5"></path><path d="M4 19h16"></path><path d="M6 16c3-7 6 1 12-8"></path>',
+      dual: '<path d="M4 19V5"></path><path d="M4 19h16"></path><path d="M6 15c3-6 6 1 12-7"></path><path d="M6 9c4 7 7-2 12 5"></path>',
+      download: '<path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path>',
+      file: '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z"></path><path d="M14 3v6h6"></path>',
+      info: '<circle cx="12" cy="12" r="9"></circle><path d="M12 10v6"></path><path d="M12 7h.01"></path>'
+    };
+
+    function iconSvg(name) {
+      return `<svg class="mini-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${iconPaths[name] || ""}</svg>`;
+    }
+
+    function setIconLabel(el, iconName, text) {
+      el.classList.add("with-icon");
+      el.innerHTML = `${iconSvg(iconName)}<span class="label-text"></span>`;
+      el.querySelector(".label-text").textContent = text;
+      el.title = text;
+    }
+
+    function setTextLabel(el, text) {
+      el.classList.remove("with-icon");
+      el.textContent = text;
+      el.title = text;
+    }
+
+    function setIconOnly(el, iconName, label) {
+      el.classList.add("with-icon", "icon-only");
+      el.innerHTML = iconSvg(iconName);
+      el.title = label;
+      el.setAttribute("aria-label", label);
+    }
+
+    function applyLanguage() {
+      const text = tr();
+      document.documentElement.lang = state.lang === "en" ? "en" : state.lang === "ja" ? "ja" : "zh-CN";
+      setIconLabel(els.panelTitle, "settings", text.panelTitle);
+      setIconLabel(els.languageLabel, "language", text.language);
+      setIconLabel(els.titrantSectionTitle, "titrant", text.titrant);
+      setTextLabel(els.titrantLabel, text.titrantKind);
+      setTextLabel(els.titrantConcLabel, text.concentration);
+      setTextLabel(els.maxVolumeLabel, text.maxVolume);
+      setIconLabel(els.analyteSectionTitle, "analyte", text.analyte);
+      setTextLabel(els.analyteLabel, text.analyteKind);
+      setTextLabel(els.analyteConcLabel, text.concentration);
+      setTextLabel(els.analyteVolLabel, text.volume);
+      setIconLabel(els.indicatorSectionTitle, "indicator", text.indicatorSettings);
+      setTextLabel(els.indicator1Label, text.indicator1);
+      setTextLabel(els.indicator2Label, text.indicator2);
+      setIconLabel(els.displaySectionTitle, "settings", text.displaySettings);
+      setTextLabel(els.imageModuleTitle, text.imageSettings);
+      setTextLabel(els.probeLabel, text.probe);
+      els.probeToggleLabel.textContent = state.probeEnabled ? text.probeOn : text.probeOff;
+      els.vMetricLabel.textContent = text.vMetric;
+      els.phMetricLabel.textContent = text.phMetric;
+      els.eqMetricLabel.textContent = text.eqMetric;
+      els.indicatorMetricLabel.textContent = text.indicatorMetric;
+      setTextLabel(document.querySelector('[data-mode="ph"]'), text.phMode);
+      setTextLabel(document.querySelector('[data-mode="both"]'), text.bothMode);
+      const exportModeValue = els.exportMode.value || "download";
+      els.exportMode.innerHTML = `<option value="download">${text.exportDownload}</option><option value="picker">${text.exportChoose}</option>`;
+      els.exportMode.value = exportModeValue;
+      setIconLabel(els.exportSvg, "file", text.exportSvg);
+      setIconLabel(els.exportPng, "download", text.exportPng);
+      setIconOnly(els.infoBtn, "info", text.info);
+      els.infoTitle.textContent = text.info;
+      els.infoClose.setAttribute("aria-label", text.close);
+      updateCustomLabels();
+      repopulateLocalizedSelects();
+      updateText(getInputs());
+      renderInfo();
+      draw();
+    }
+
+    function updateCustomLabels() {
+      const text = tr();
+      els.customTitrantName.setAttribute("aria-label", text.customName);
+      els.customTitrantName.setAttribute("placeholder", text.customName);
+      els.customTitrantK.setAttribute("aria-label", text.customK);
+      els.customTitrantK.setAttribute("placeholder", text.customK);
+      els.customAnalyteName.setAttribute("aria-label", text.customName);
+      els.customAnalyteName.setAttribute("placeholder", text.customName);
+      els.customAnalyteK.setAttribute("aria-label", text.customK);
+      els.customAnalyteK.setAttribute("placeholder", text.customK);
+      [els.customTitrantType, els.customAnalyteType].forEach((select) => {
+        select.options[0].textContent = text.acid;
+        select.options[1].textContent = text.base;
+      });
+    }
+
+    function repopulateLocalizedSelects() {
+      const values = {
+        titrant: els.titrant.value || "NaOH",
+        analyte: els.analyte.value || "HCl",
+        indicator: els.indicator.value || "phenolphthalein",
+        indicator2: els.indicator2.value || "methylOrange"
+      };
+      fillSubstanceSelects();
+      fillIndicatorSelects();
+      els.titrant.value = values.titrant;
+      els.analyte.value = values.analyte;
+      els.indicator.value = values.indicator;
+      els.indicator2.value = values.indicator2;
+    }
+
+    function populateSelects() {
+      fillSubstanceSelects();
+      els.titrant.value = "NaOH";
+      els.analyte.value = "HCl";
+      fillIndicatorSelects();
+      els.indicator.value = "phenolphthalein";
+      els.indicator2.value = "methylOrange";
+      syncCustomVisibility();
+    }
+
+    function fillSubstanceSelects() {
+      updateCustomSubstances();
+      const acidBaseGroups = {};
+      Object.entries(substances).forEach(([key, item]) => {
+        if (key === "customTitrant" || key === "customAnalyte") return;
+        if (!acidBaseGroups[item.className]) acidBaseGroups[item.className] = [];
+        acidBaseGroups[item.className].push([key, item]);
+      });
+
+      [els.titrant, els.analyte].forEach((select) => {
+        select.innerHTML = "";
+        Object.entries(acidBaseGroups).forEach(([groupName, items]) => {
+          const group = document.createElement("optgroup");
+          group.label = classLabel(groupName);
+          items.forEach(([key, item]) => {
+            const option = document.createElement("option");
+            option.value = key;
+            option.textContent = substanceName(item);
+            group.appendChild(option);
+          });
+          select.appendChild(group);
+        });
+        const customOption = document.createElement("option");
+        customOption.value = select === els.titrant ? "customTitrant" : "customAnalyte";
+        customOption.textContent = tr().custom;
+        select.appendChild(customOption);
+      });
+    }
+
+    function updateCustomSubstances() {
+      buildCustomSubstance("customTitrant", els.customTitrantName, els.customTitrantType, els.customTitrantK);
+      buildCustomSubstance("customAnalyte", els.customAnalyteName, els.customAnalyteType, els.customAnalyteK);
+    }
+
+    function buildCustomSubstance(key, nameEl, typeEl, kEl) {
+      const fallbackName = key === "customTitrant" ? "HA" : "B";
+      const name = (nameEl.value || fallbackName).trim() || fallbackName;
+      const type = typeEl.value === "base" ? "base" : "acid";
+      const k = clampNumber(parseFloat(kEl.value), 1e-14, 10, 1e-5);
+      const familyKey = `${key}Family`;
+      if (type === "acid") {
+        families[familyKey] = { name: `${name} / ${name}⁻`, charges: [0, -1], pKas: [-Math.log10(k)] };
+        substances[key] = { label: name, className: "弱酸", acidCapacity: 1, baseCapacity: 0, components: [{ family: familyKey, stoich: 1 }], customK: k, customType: "acid" };
+      } else {
+        families[familyKey] = { name: `${name}H⁺ / ${name}`, charges: [1, 0], pKas: [14 + Math.log10(k)] };
+        substances[key] = { label: name, className: "弱碱", acidCapacity: 0, baseCapacity: 1, components: [{ family: familyKey, stoich: 1 }], customK: k, customType: "base" };
+      }
+    }
+
+    function syncCustomVisibility() {
+      els.customTitrantFields.classList.toggle("active", els.titrant.value === "customTitrant");
+      els.customAnalyteFields.classList.toggle("active", els.analyte.value === "customAnalyte");
+    }
+
+    function fillIndicatorSelects() {
+      els.indicator.innerHTML = "";
+      els.indicator2.innerHTML = "";
+      Object.entries(indicators).forEach(([key, item]) => {
+        [els.indicator, els.indicator2].forEach((select) => {
+          const option = document.createElement("option");
+          option.value = key;
+          option.textContent = indicatorName(item);
+          select.appendChild(option);
+        });
+      });
+    }
+
+    function kInfoForSubstance(key) {
+      const text = tr();
+      const substance = substances[key];
+      if (substance.customK) {
+        const symbol = substance.customType === "base" ? "Kb" : "Ka";
+        return `${text.kPrefix}${substanceName(substance)}: ${symbol}=${formatSci(substance.customK)}`;
+      }
+      const infos = [];
+      substance.components.forEach((component) => {
+        const family = families[component.family];
+        if (family.pKas.length) {
+          const values = family.pKas.map((pKa, index) => `K${family.pKas.length > 1 ? index + 1 : ""}=${formatSci(10 ** (-pKa))}`);
+          infos.push(`${family.name}: ${values.join(", ")}`);
+        }
+      });
+      if (infos.length) return `${text.kPrefix}${infos.join("；")}`;
+      if (substance.acidCapacity > 0) return text.strongAcidK;
+      if (substance.baseCapacity > 0) return text.strongBaseK;
+      return text.neutralK;
+    }
+
+    function formatSci(value) {
+      if (!Number.isFinite(value) || value <= 0) return "--";
+      const exponent = Math.floor(Math.log10(value));
+      const mantissa = value / 10 ** exponent;
+      return `${mantissa.toFixed(2)}×10^${exponent}`;
+    }
+
+    function selectedIndicators() {
+      return [els.indicator.value, els.indicator2.value]
+        .filter((key, index, array) => key !== "none" && array.indexOf(key) === index)
+        .map((key) => indicators[key]);
+    }
+
+    function distribution(family, h) {
+      if (family.pKas.length === 0) return [1];
+      const n = family.pKas.length;
+      const kas = family.pKas.map((pKa) => 10 ** (-pKa));
+      const terms = [1];
+      let product = 1;
+      for (let i = 0; i < n; i += 1) {
+        product *= kas[i];
+        terms.push(product / h ** (i + 1));
+      }
+      const sum = terms.reduce((a, b) => a + b, 0);
+      return terms.map((term) => term / sum);
+    }
+
+    function averageCharge(family, h) {
+      const alphas = distribution(family, h);
+      return alphas.reduce((total, alpha, index) => total + alpha * family.charges[index], 0);
+    }
+
+    function addSubstance(molesByFamily, key, moles) {
+      const substance = substances[key];
+      substance.components.forEach((component) => {
+        molesByFamily[component.family] = (molesByFamily[component.family] || 0) + component.stoich * moles;
+      });
+    }
+
+    function chargeBalance(logH, concentrations) {
+      const h = 10 ** logH;
+      let balance = h - KW / h;
+      Object.entries(concentrations).forEach(([familyKey, concentration]) => {
+        const family = families[familyKey];
+        balance += concentration * averageCharge(family, h);
+      });
+      return balance;
+    }
+
+    function solvePH(molesByFamily, totalVolumeL) {
+      const concentrations = {};
+      Object.entries(molesByFamily).forEach(([family, moles]) => {
+        const c = moles / totalVolumeL;
+        if (Math.abs(c) > 1e-18) concentrations[family] = c;
+      });
+
+      let lo = -16;
+      let hi = 2;
+      let flo = chargeBalance(lo, concentrations);
+      let fhi = chargeBalance(hi, concentrations);
+
+      if (!Number.isFinite(flo) || !Number.isFinite(fhi)) throw new Error("电荷守恒方程溢出");
+      if (flo * fhi > 0) {
+        lo = -20;
+        hi = 4;
+        flo = chargeBalance(lo, concentrations);
+        fhi = chargeBalance(hi, concentrations);
+      }
+
+      if (flo * fhi > 0) {
+        throw new Error("未能包围电中性根");
+      }
+
+      for (let i = 0; i < 90; i += 1) {
+        const mid = (lo + hi) / 2;
+        const fmid = chargeBalance(mid, concentrations);
+        if (flo * fmid <= 0) {
+          hi = mid;
+          fhi = fmid;
+        } else {
+          lo = mid;
+          flo = fmid;
+        }
+      }
+      const logH = (lo + hi) / 2;
+      return -logH;
+    }
+
+    function getInputs() {
+      return {
+        titrant: els.titrant.value,
+        analyte: els.analyte.value,
+        ct: clampNumber(parseFloat(els.titrantConc.value), 1e-4, 5, 0.1),
+        ca: clampNumber(parseFloat(els.analyteConc.value), 1e-4, 5, 0.1),
+        vaMl: clampNumber(parseFloat(els.analyteVol.value), 1, 250, 25),
+        maxVMl: clampNumber(parseFloat(els.maxVolume.value), 5, 300, 200),
+        indicator: els.indicator.value,
+        indicator2: els.indicator2.value
+      };
+    }
+
+    function clampNumber(value, min, max, fallback) {
+      if (!Number.isFinite(value)) return fallback;
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function computeEquivalence(inputs) {
+      const titrant = substances[inputs.titrant];
+      const analyte = substances[inputs.analyte];
+      const analyteMol = inputs.ca * inputs.vaMl / 1000;
+      const acidTitrant = titrant.acidCapacity > titrant.baseCapacity;
+      const baseTitrant = titrant.baseCapacity > titrant.acidCapacity;
+      const analyteCapacity = acidTitrant ? analyte.baseCapacity : baseTitrant ? analyte.acidCapacity : 0;
+      const titrantCapacity = acidTitrant ? titrant.acidCapacity : baseTitrant ? titrant.baseCapacity : 0;
+      const count = Math.max(0, Math.round(analyteCapacity));
+      if (count === 0 || titrantCapacity === 0) return [];
+      const volumes = [];
+      for (let i = 1; i <= count; i += 1) {
+        const volume = analyteMol * i / (inputs.ct * titrantCapacity) * 1000;
+        if (volume >= 0 && volume <= inputs.maxVMl * 1.02) volumes.push(volume);
+      }
+      return volumes;
+    }
+
+    function calculateCurve() {
+      updateCustomSubstances();
+      syncCustomVisibility();
+      const inputs = getInputs();
+      const n = 520;
+      const points = [];
+      const baseMoles = inputs.ca * inputs.vaMl / 1000;
+      let failures = 0;
+
+      for (let i = 0; i <= n; i += 1) {
+        const vMl = inputs.maxVMl * i / n;
+        const totalVolumeL = (inputs.vaMl + vMl) / 1000;
+        const molesByFamily = {};
+        addSubstance(molesByFamily, inputs.analyte, baseMoles);
+        addSubstance(molesByFamily, inputs.titrant, inputs.ct * vMl / 1000);
+        try {
+          const ph = solvePH(molesByFamily, totalVolumeL);
+          if (Number.isFinite(ph)) points.push({ v: vMl, ph: Math.max(-1, Math.min(15, ph)) });
+          else failures += 1;
+        } catch (error) {
+          failures += 1;
+          if (points.length > 0) points.push({ v: vMl, ph: points[points.length - 1].ph });
+        }
+      }
+
+      const derivatives = points.map((point, index) => {
+        const left = points[Math.max(0, index - 1)];
+        const right = points[Math.min(points.length - 1, index + 1)];
+        const dv = right.v - left.v || 1;
+        return { v: point.v, value: (right.ph - left.ph) / dv };
+      });
+
+      state.points = points;
+      state.derivatives = derivatives;
+      state.equivalence = computeEquivalence(inputs);
+      state.lastError = failures ? tr().fallback(failures) : "";
+      els.probe.max = String(inputs.maxVMl);
+      els.probeNumber.max = String(inputs.maxVMl);
+      if (parseFloat(els.probe.value) > inputs.maxVMl) setProbeValue(inputs.maxVMl);
+      updateText(inputs);
+      draw();
+    }
+
+    function setProbeValue(value) {
+      const max = parseFloat(els.probe.max) || 0;
+      const v = Math.max(0, Math.min(max, Number.isFinite(value) ? value : 0));
+      els.probe.value = String(v);
+      els.probeNumber.value = v.toFixed(1);
+    }
+
+    function updateText(inputs) {
+      const text = tr();
+      const titrant = substances[inputs.titrant];
+      const analyte = substances[inputs.analyte];
+      els.title.textContent = text.title(inputs.ct.toPrecision(3), substanceName(titrant), inputs.ca.toPrecision(3), substanceName(analyte));
+      els.subtitle.textContent = text.subtitle(classLabel(analyte.className), inputs.vaMl.toFixed(2), classLabel(titrant.className));
+      els.titrantK.textContent = kInfoForSubstance(inputs.titrant);
+      els.analyteK.textContent = kInfoForSubstance(inputs.analyte);
+      els.titrantK.title = els.titrantK.textContent;
+      els.analyteK.title = els.analyteK.textContent;
+      const eq = state.equivalence.length ? state.equivalence.map((v) => `${v.toFixed(2)}`).join(" / ") + " mL" : text.no;
+      els.eqRead.textContent = eq;
+      const inds = selectedIndicators();
+      els.indicatorRead.textContent = inds.length ? inds.map((ind) => `${indicatorName(ind)} ${ind.low}-${ind.high}`).join(" / ") : text.no;
+      [els.eqRead, els.indicatorRead, els.vRead, els.phRead, els.title, els.subtitle].forEach((el) => {
+        el.title = el.textContent;
+      });
+      const warning = state.equivalence.some((v) => v > inputs.maxVMl)
+        ? "部分等当点超过当前横轴范围。"
+        : "";
+      els.status.innerHTML = `${state.lastError ? `<span class="warn">${state.lastError}</span>` : ""} ${warning ? `<span class="warn">${text.outOfRange}</span>` : ""}`;
+      fitTitle();
+      updateProbeReadout();
+      renderInfo();
+    }
+
+    function fitTitle() {
+      els.title.style.setProperty("--title-size", "34px");
+      const available = els.title.parentElement.clientWidth;
+      let size = 34;
+      while (els.title.scrollWidth > available && size > 20) {
+        size -= 1;
+        els.title.style.setProperty("--title-size", `${size}px`);
+      }
+    }
+
+    function renderInfo() {
+      const rows = tr().infoRows;
+      const pointCount = state.points.length || 0;
+      const entries = [
+        rows.makers,
+        rows.sources,
+        rows.model,
+        [rows.points[0], typeof rows.points[1] === "function" ? rows.points[1](pointCount) : rows.points[1]],
+        rows.updated,
+        rows.version,
+        rows.license
+      ];
+      els.infoContent.innerHTML = entries.map(([term, value]) => `<dt>${escapeHtml(term)}</dt><dd>${escapeHtml(value)}</dd>`).join("") + renderInfoTables();
+    }
+
+    function renderInfoTables() {
+      const text = tr();
+      return `
+        <details class="info-disclosure">
+          <summary>${escapeHtml(text.acidBaseTable)}</summary>
+          <div class="info-table-wrap">
+            <table class="info-table">
+              <thead><tr><th>${escapeHtml(text.tableName)}</th><th>${escapeHtml(text.tableType)}</th><th>${escapeHtml(text.tableK)}</th></tr></thead>
+              <tbody>${Object.entries(substances).map(([key, substance]) => substanceInfoRow(key, substance)).join("")}</tbody>
+            </table>
+          </div>
+        </details>
+        <details class="info-disclosure">
+          <summary>${escapeHtml(text.indicatorTable)}</summary>
+          <div class="info-table-wrap">
+            <table class="info-table">
+              <thead><tr><th>${escapeHtml(text.tableName)}</th><th>${escapeHtml(text.tableRange)}</th><th>${escapeHtml(text.tableColors)}</th></tr></thead>
+              <tbody>${Object.entries(indicators).filter(([key]) => key !== "none").map(([, ind]) => indicatorInfoRow(ind)).join("")}</tbody>
+            </table>
+          </div>
+        </details>`;
+    }
+
+    function substanceInfoRow(key, substance) {
+      const kText = substance.customK
+        ? `${substance.customType === "base" ? "Kb" : "Ka"}=${formatSci(substance.customK)}`
+        : kInfoForSubstance(key).replace(/^K[：:]\s*/, "");
+      return `<tr><td>${escapeHtml(substanceName(substance))}</td><td>${escapeHtml(classLabel(substance.className))}</td><td>${escapeHtml(kText)}</td></tr>`;
+    }
+
+    function indicatorInfoRow(ind) {
+      return `<tr><td>${escapeHtml(indicatorName(ind))}</td><td>${ind.low}-${ind.high}</td><td>${escapeHtml(ind.acid)} → ${escapeHtml(ind.base)}</td></tr>`;
+    }
+
+    function openInfo() {
+      renderInfo();
+      document.body.classList.add("modal-open");
+      els.infoLayer.setAttribute("aria-hidden", "false");
+      els.infoClose.focus();
+    }
+
+    function closeInfo() {
+      document.body.classList.remove("modal-open");
+      els.infoLayer.setAttribute("aria-hidden", "true");
+      els.infoBtn.focus();
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[char]));
+    }
+
+    function interpolateAt(v) {
+      const points = state.points;
+      if (!points.length) return null;
+      if (v <= points[0].v) return points[0];
+      if (v >= points[points.length - 1].v) return points[points.length - 1];
+      const idx = Math.floor(v / points[points.length - 1].v * (points.length - 1));
+      const a = points[Math.max(0, Math.min(points.length - 2, idx))];
+      const b = points[Math.max(1, Math.min(points.length - 1, idx + 1))];
+      const t = (v - a.v) / (b.v - a.v || 1);
+      return { v, ph: a.ph + (b.ph - a.ph) * t };
+    }
+
+    function updateProbeReadout() {
+      if (!state.probeEnabled) {
+        els.vRead.textContent = "--";
+        els.phRead.textContent = "--";
+        els.vRead.title = "--";
+        els.phRead.title = "--";
+        return;
+      }
+      const v = parseFloat(els.probe.value);
+      if (document.activeElement !== els.probeNumber) els.probeNumber.value = Number.isFinite(v) ? v.toFixed(1) : "0.0";
+      const point = interpolateAt(v);
+      els.vRead.textContent = `${v.toFixed(2)} mL`;
+      els.phRead.textContent = point ? point.ph.toFixed(3) : "--";
+      els.vRead.title = els.vRead.textContent;
+      els.phRead.title = els.phRead.textContent;
+    }
+
+    function draw() {
+      const rect = els.chart.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      els.chart.width = Math.max(1, Math.floor(rect.width * dpr));
+      els.chart.height = Math.max(1, Math.floor(rect.height * dpr));
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, rect.width, rect.height);
+      state.chartBoxes = [];
+
+      const mode = state.mode;
+      els.chartBadge.innerHTML = mode === "both"
+          ? `<span class="dot"></span><span>pH-V</span><span class="dot deriv"></span><span>${tr().firstDerivative}</span>`
+          : `<span class="dot"></span><span>pH-V</span>`;
+
+      if (!state.points.length) return;
+      const plot = { x: 86, y: 46, w: rect.width - 176, h: rect.height - 116 };
+      if (mode === "both") {
+        drawOverlayChart(plot);
+      } else {
+        drawPHChart(plot, false);
+      }
+    }
+
+    function drawGrid(box, yMin, yMax, label, color, options = {}) {
+      const side = options.side || "left";
+      const showX = options.showX !== false;
+      const showFrame = options.showFrame !== false;
+      ctx.save();
+      ctx.strokeStyle = "rgba(35,47,57,0.13)";
+      ctx.lineWidth = 1;
+      ctx.fillStyle = "#59636a";
+      ctx.font = "800 18px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+      ctx.textAlign = side === "right" ? "left" : "right";
+      ctx.textBaseline = "middle";
+      for (let i = 0; i <= 5; i += 1) {
+        const y = box.y + box.h * i / 5;
+        const value = yMax - (yMax - yMin) * i / 5;
+        if (side === "left") {
+          ctx.beginPath();
+          ctx.moveTo(box.x, y);
+          ctx.lineTo(box.x + box.w, y);
+          ctx.stroke();
+        }
+        ctx.fillText(formatAxis(value), side === "right" ? box.x + box.w + 12 : box.x - 12, y);
+      }
+      if (showX) {
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        const maxV = state.points[state.points.length - 1].v;
+        for (let i = 0; i <= 5; i += 1) {
+          const x = box.x + box.w * i / 5;
+          ctx.beginPath();
+          ctx.moveTo(x, box.y);
+          ctx.lineTo(x, box.y + box.h);
+          ctx.stroke();
+          ctx.fillText((maxV * i / 5).toFixed(0), x, box.y + box.h + 13);
+        }
+      }
+      ctx.strokeStyle = "rgba(35,47,57,0.28)";
+      ctx.lineWidth = 1.5;
+      if (showFrame) ctx.strokeRect(box.x, box.y, box.w, box.h);
+      ctx.fillStyle = color;
+      ctx.textAlign = side === "right" ? "right" : "left";
+      ctx.textBaseline = "bottom";
+      ctx.font = "900 24px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+      ctx.fillText(label, side === "right" ? box.x + box.w : box.x, box.y - 12);
+      ctx.fillStyle = "#59636a";
+      ctx.textAlign = "right";
+      ctx.textBaseline = "top";
+      if (showX) {
+        ctx.font = "900 22px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+        ctx.fillText("V / mL", box.x + box.w, box.y + box.h + 42);
+      }
+      ctx.restore();
+    }
+
+    function formatAxis(value) {
+      const abs = Math.abs(value);
+      if (abs >= 10) return value.toFixed(0);
+      if (abs >= 1) return value.toFixed(1);
+      return value.toFixed(2);
+    }
+
+    function mapper(box, yMin, yMax) {
+      const maxV = state.points[state.points.length - 1].v;
+      return {
+        x: (v) => box.x + (v / maxV) * box.w,
+        y: (value) => box.y + (1 - (value - yMin) / (yMax - yMin || 1)) * box.h
+      };
+    }
+
+    function drawIndicator(box, map, yMin, yMax) {
+      selectedIndicators().forEach((ind, index) => drawOneIndicator(ind, index, box, map));
+    }
+
+    function drawOneIndicator(ind, index, box, map) {
+      const yLow = map.y(ind.low);
+      const yHigh = map.y(ind.high);
+      const top = Math.min(yLow, yHigh);
+      const height = Math.abs(yHigh - yLow);
+      if (top > box.y + box.h || top + height < box.y) return;
+
+      const grad = ctx.createLinearGradient(0, top + height, 0, top);
+      grad.addColorStop(0, ind.acid);
+      grad.addColorStop(1, ind.base);
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(box.x, box.y, box.w, box.h);
+      ctx.clip();
+      ctx.globalAlpha = index === 0 ? 0.30 : 0.24;
+      ctx.fillStyle = grad;
+      ctx.fillRect(box.x, top, box.w, height || 1);
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = "rgba(23,32,38,0.58)";
+      ctx.setLineDash([8, 7]);
+      ctx.lineWidth = 1.8;
+      [ind.low, ind.high].forEach((pH) => {
+        const y = map.y(pH);
+        ctx.beginPath();
+        ctx.moveTo(box.x, y);
+        ctx.lineTo(box.x + box.w, y);
+        ctx.stroke();
+      });
+      ctx.setLineDash([]);
+      ctx.fillStyle = "rgba(255,255,255,0.9)";
+      ctx.strokeStyle = "rgba(35,47,57,0.2)";
+      const label = `${indicatorName(ind)} ${ind.low}-${ind.high}`;
+      ctx.font = "800 13px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+      const tw = ctx.measureText(label).width + 18;
+      const lx = Math.min(box.x + box.w - tw - 8, box.x + box.w * (0.56 + index * 0.08));
+      const ly = Math.max(box.y + 8, Math.min(box.y + box.h - 34, top + height / 2 - 16 + index * 26));
+      roundRect(lx, ly, tw, 30, 6);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#172026";
+      ctx.fillText(label, lx + 9, ly + 20);
+      ctx.restore();
+    }
+
+    function drawEquivalence(box, map, yMin, yMax) {
+      ctx.save();
+      state.equivalence.forEach((v, index) => {
+        const x = map.x(v);
+        if (x < box.x || x > box.x + box.w) return;
+        ctx.strokeStyle = "rgba(47,143,99,0.74)";
+        ctx.setLineDash([6, 6]);
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(x, box.y);
+        ctx.lineTo(x, box.y + box.h);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = "rgba(255,255,255,0.92)";
+        ctx.strokeStyle = "rgba(47,143,99,0.38)";
+        const label = `E${index + 1} ${v.toFixed(2)} mL`;
+        ctx.font = "800 13px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+        const tw = ctx.measureText(label).width + 14;
+        const lx = Math.max(box.x + 6, Math.min(box.x + box.w - tw - 6, x + 8));
+        const ly = box.y + 10 + index * 32;
+        roundRect(lx, ly, tw, 26, 6);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#1f6d4d";
+        ctx.fillText(label, lx + 7, ly + 18);
+      });
+      ctx.restore();
+    }
+
+    function drawPHChart(box, compact) {
+      const yMin = 0;
+      const yMax = 14;
+      const map = mapper(box, yMin, yMax);
+      drawGrid(box, yMin, yMax, compact ? "pH" : "pH", "#0b74c8");
+      drawIndicator(box, map, yMin, yMax);
+      drawEquivalence(box, map, yMin, yMax);
+      drawSeries(state.points, (p) => p.v, (p) => p.ph, map, "#0b74c8", 3.4, true);
+      drawProbe(box, map, (p) => p.ph, yMin, yMax);
+    }
+
+    function derivativeRange() {
+      const values = state.derivatives.map((d) => d.value).filter(Number.isFinite);
+      let min = Math.min(...values);
+      let max = Math.max(...values);
+      const pad = Math.max(0.04, (max - min) * 0.16);
+      min -= pad;
+      max += pad;
+      if (min === max) {
+        min -= 1;
+        max += 1;
+      }
+      return { min, max };
+    }
+
+    function drawOverlayChart(box) {
+      const phMap = mapper(box, 0, 14);
+      const range = derivativeRange();
+      const slopeMap = mapper(box, range.min, range.max);
+      drawGrid(box, 0, 14, "pH", "#0b74c8");
+      drawGrid(box, range.min, range.max, tr().firstDerivative, "#c63f3f", { side: "right", showX: false, showFrame: false });
+      drawIndicator(box, phMap, 0, 14);
+      drawEquivalence(box, phMap, 0, 14);
+      drawSeries(state.points, (p) => p.v, (p) => p.ph, phMap, "#0b74c8", 3.6, true);
+      drawSeries(state.derivatives, (p) => p.v, (p) => p.value, slopeMap, "#c63f3f", 2.8, false);
+      drawProbe(box, phMap, (p) => p.ph, 0, 14);
+    }
+
+    function drawDerivativeChart(box, compact) {
+      const range = derivativeRange();
+      const map = mapper(box, range.min, range.max);
+      drawGrid(box, range.min, range.max, tr().firstDerivative, "#c63f3f");
+      drawEquivalence(box, map, range.min, range.max);
+      drawSeries(state.derivatives, (p) => p.v, (p) => p.value, map, "#c63f3f", 2.4, false);
+    }
+
+    function drawSeries(data, xGetter, yGetter, map, color, width, shadow) {
+      ctx.save();
+      ctx.beginPath();
+      data.forEach((point, index) => {
+        const x = map.x(xGetter(point));
+        const y = map.y(yGetter(point));
+        if (index === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      if (shadow) {
+        ctx.shadowColor = "rgba(0,0,0,0.24)";
+        ctx.shadowBlur = 10;
+        ctx.shadowOffsetY = 7;
+      }
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      ctx.lineJoin = "round";
+      ctx.lineCap = "round";
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawProbe(box, map, yGetter, yMin, yMax) {
+      if (!state.probeEnabled) return;
+      const probeV = parseFloat(els.probe.value);
+      const point = interpolateAt(probeV);
+      if (!point) return;
+      const x = map.x(point.v);
+      const y = map.y(yGetter(point));
+      if (x < box.x || x > box.x + box.w || y < box.y || y > box.y + box.h) return;
+      ctx.save();
+      ctx.strokeStyle = "rgba(23,32,38,0.34)";
+      ctx.setLineDash([4, 6]);
+      ctx.beginPath();
+      ctx.moveTo(x, box.y);
+      ctx.lineTo(x, box.y + box.h);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = "#172026";
+      ctx.beginPath();
+      ctx.arc(x, y, 5.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,0.95)";
+      ctx.strokeStyle = "rgba(23,32,38,0.18)";
+      const label = `pH ${point.ph.toFixed(3)}`;
+      ctx.font = "800 13px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+      const tw = ctx.measureText(label).width + 16;
+      const lx = Math.min(box.x + box.w - tw - 8, x + 10);
+      const ly = Math.max(box.y + 8, y - 36);
+      roundRect(lx, ly, tw, 28, 6);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#172026";
+      ctx.fillText(label, lx + 8, ly + 19);
+      ctx.restore();
+    }
+
+    function roundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    async function exportPng() {
+      draw();
+      els.chart.toBlob((blob) => {
+        if (!blob) return;
+        saveBlob(blob, "acid-base-titration-curve.png", "image/png");
+      }, "image/png");
+    }
+
+    async function exportSvg() {
+      const svg = buildSvg();
+      await saveBlob(new Blob([svg], { type: "image/svg+xml;charset=utf-8" }), "acid-base-titration-curve.svg", "image/svg+xml");
+    }
+
+    function buildSvg() {
+      const width = 1600;
+      const height = 760;
+      const plot = { x: 130, y: 140, w: 1300, h: 500 };
+      const title = escapeXml(els.title.textContent);
+      const subtitle = escapeXml(els.subtitle.textContent);
+      const parts = [
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`,
+        `<rect width="100%" height="100%" fill="#f7f5ef"/>`,
+        `<text x="80" y="62" font-family="Arial, 'PingFang SC', sans-serif" font-size="38" font-weight="800" fill="#172026">${title}</text>`,
+        `<text x="80" y="96" font-family="Arial, 'PingFang SC', sans-serif" font-size="22" font-weight="600" fill="#5f6870">${subtitle}</text>`,
+        svgPHChart(plot)
+      ];
+      parts.push(`</svg>`);
+      return parts.join("");
+    }
+
+    function svgPHChart(box) {
+      const map = svgMapper(box, 0, 14);
+      const parts = [svgGrid(box, 0, 14, "pH", "#0b74c8")];
+      selectedIndicators().forEach((ind, index) => {
+        const y1 = map.y(ind.low);
+        const y2 = map.y(ind.high);
+        const top = Math.min(y1, y2);
+        const h = Math.abs(y2 - y1);
+        const id = `indGrad${index}`;
+        parts.push(`<defs><linearGradient id="${id}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="${ind.acid}"/><stop offset="1" stop-color="${ind.base}"/></linearGradient></defs>`);
+        parts.push(`<rect x="${box.x}" y="${top}" width="${box.w}" height="${h || 1}" fill="url(#${id})" opacity="${index === 0 ? "0.34" : "0.26"}"/>`);
+        parts.push(`<line x1="${box.x}" y1="${y1}" x2="${box.x + box.w}" y2="${y1}" stroke="#172026" stroke-width="2" stroke-dasharray="10 8" opacity="0.55"/>`);
+        parts.push(`<line x1="${box.x}" y1="${y2}" x2="${box.x + box.w}" y2="${y2}" stroke="#172026" stroke-width="2" stroke-dasharray="10 8" opacity="0.55"/>`);
+        parts.push(`<text x="${box.x + box.w - 250}" y="${Math.max(box.y + 28, Math.min(box.y + box.h - 18, top + h / 2 + index * 26))}" font-family="Arial, 'PingFang SC', sans-serif" font-size="20" font-weight="800" fill="#172026">${escapeXml(indicatorName(ind))} ${ind.low}-${ind.high}</text>`);
+      });
+      parts.push(svgEquivalence(box, map));
+      parts.push(`<path d="${svgPath(state.points, (p) => p.v, (p) => p.ph, map)}" fill="none" stroke="#0b74c8" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>`);
+      if (state.mode === "both") {
+        const range = derivativeRange();
+        const slopeMap = svgMapper(box, range.min, range.max);
+        parts.push(svgRightAxis(box, range.min, range.max, tr().firstDerivative, "#c63f3f"));
+        parts.push(`<path d="${svgPath(state.derivatives, (p) => p.v, (p) => p.value, slopeMap)}" fill="none" stroke="#c63f3f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`);
+      }
+      return parts.join("");
+    }
+
+    function svgDerivativeChart(box) {
+      const values = state.derivatives.map((d) => d.value).filter(Number.isFinite);
+      let min = Math.min(...values);
+      let max = Math.max(...values);
+      const pad = Math.max(0.04, (max - min) * 0.16);
+      min -= pad;
+      max += pad;
+      const map = svgMapper(box, min, max);
+      return [
+        svgGrid(box, min, max, tr().firstDerivative, "#c63f3f"),
+        svgEquivalence(box, map),
+        `<path d="${svgPath(state.derivatives, (p) => p.v, (p) => p.value, map)}" fill="none" stroke="#c63f3f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`
+      ].join("");
+    }
+
+    function svgGrid(box, yMin, yMax, label, color) {
+      const maxV = state.points[state.points.length - 1].v;
+      const parts = [`<rect x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}" fill="#ffffff" stroke="rgba(35,47,57,0.30)" stroke-width="2"/>`];
+      for (let i = 0; i <= 5; i += 1) {
+        const y = box.y + box.h * i / 5;
+        const value = yMax - (yMax - yMin) * i / 5;
+        parts.push(`<line x1="${box.x}" y1="${y}" x2="${box.x + box.w}" y2="${y}" stroke="rgba(35,47,57,0.14)" stroke-width="1.5"/>`);
+        parts.push(`<text x="${box.x - 14}" y="${y + 7}" text-anchor="end" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#59636a">${formatAxis(value)}</text>`);
+      }
+      for (let i = 0; i <= 5; i += 1) {
+        const x = box.x + box.w * i / 5;
+        parts.push(`<line x1="${x}" y1="${box.y}" x2="${x}" y2="${box.y + box.h}" stroke="rgba(35,47,57,0.12)" stroke-width="1.5"/>`);
+        parts.push(`<text x="${x}" y="${box.y + box.h + 32}" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#59636a">${(maxV * i / 5).toFixed(0)}</text>`);
+      }
+      parts.push(`<text x="${box.x}" y="${box.y - 18}" font-family="Arial, sans-serif" font-size="24" font-weight="800" fill="${color}">${label}</text>`);
+      parts.push(`<text x="${box.x + box.w}" y="${box.y + box.h + 62}" text-anchor="end" font-family="Arial, sans-serif" font-size="22" font-weight="800" fill="#59636a">V / mL</text>`);
+      return parts.join("");
+    }
+
+    function svgRightAxis(box, yMin, yMax, label, color) {
+      const parts = [];
+      for (let i = 0; i <= 5; i += 1) {
+        const y = box.y + box.h * i / 5;
+        const value = yMax - (yMax - yMin) * i / 5;
+        parts.push(`<text x="${box.x + box.w + 16}" y="${y + 7}" text-anchor="start" font-family="Arial, sans-serif" font-size="18" font-weight="800" fill="#59636a">${formatAxis(value)}</text>`);
+      }
+      parts.push(`<text x="${box.x + box.w}" y="${box.y - 18}" text-anchor="end" font-family="Arial, 'PingFang SC', sans-serif" font-size="26" font-weight="900" fill="${color}">${label}</text>`);
+      return parts.join("");
+    }
+
+    function svgEquivalence(box, map) {
+      return state.equivalence.map((v, index) => {
+        const x = map.x(v);
+        if (x < box.x || x > box.x + box.w) return "";
+        const y = box.y + 36 + index * 36;
+        return `<line x1="${x}" y1="${box.y}" x2="${x}" y2="${box.y + box.h}" stroke="#2f8f63" stroke-width="2.2" stroke-dasharray="9 8" opacity="0.8"/><text x="${Math.min(box.x + box.w - 170, x + 14)}" y="${y}" font-family="Arial, sans-serif" font-size="20" font-weight="800" fill="#1f6d4d">E${index + 1} ${v.toFixed(2)} mL</text>`;
+      }).join("");
+    }
+
+    function svgMapper(box, yMin, yMax) {
+      const maxV = state.points[state.points.length - 1].v;
+      return {
+        x: (v) => box.x + (v / maxV) * box.w,
+        y: (value) => box.y + (1 - (value - yMin) / (yMax - yMin || 1)) * box.h
+      };
+    }
+
+    function svgPath(data, xGetter, yGetter, map) {
+      return data.map((point, index) => `${index === 0 ? "M" : "L"}${map.x(xGetter(point)).toFixed(2)} ${map.y(yGetter(point)).toFixed(2)}`).join(" ");
+    }
+
+    function escapeXml(value) {
+      return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&apos;" }[char]));
+    }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 800);
+    }
+
+    async function saveBlob(blob, suggestedName, mimeType) {
+      if (els.exportMode.value === "picker" && "showSaveFilePicker" in window) {
+        try {
+          const extension = suggestedName.split(".").pop();
+          const handle = await window.showSaveFilePicker({
+            suggestedName,
+            types: [{ description: suggestedName.toUpperCase(), accept: { [mimeType]: [`.${extension}`] } }]
+          });
+          const writable = await handle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+          return;
+        } catch (error) {
+          if (error?.name === "AbortError") return;
+        }
+      }
+      downloadBlob(blob, suggestedName);
+    }
+
+    function scheduleCompute() {
+      window.clearTimeout(scheduleCompute.timer);
+      scheduleCompute.timer = window.setTimeout(calculateCurve, 40);
+    }
+
+    function setSample(type) {
+      if (type === "carbonate") {
+        els.titrant.value = "HCl";
+        els.analyte.value = "Na2CO3";
+        els.titrantConc.value = "0.1000";
+        els.analyteConc.value = "0.1000";
+        els.analyteVol.value = "25.00";
+        els.maxVolume.value = "70";
+        els.indicator.value = "methylOrange";
+        els.indicator2.value = "phenolphthalein";
+      } else {
+        els.titrant.value = "NaOH";
+        els.analyte.value = "HCl";
+        els.titrantConc.value = "0.1000";
+        els.analyteConc.value = "0.1000";
+        els.analyteVol.value = "25.00";
+        els.maxVolume.value = "60";
+        els.indicator.value = "phenolphthalein";
+        els.indicator2.value = "methylOrange";
+      }
+      setProbeValue(0);
+      calculateCurve();
+    }
+
+    function attachEvents() {
+      ["change", "input"].forEach((eventName) => {
+        [els.titrant, els.customTitrantName, els.customTitrantType, els.customTitrantK, els.titrantConc, els.maxVolume, els.analyte, els.customAnalyteName, els.customAnalyteType, els.customAnalyteK, els.analyteConc, els.analyteVol, els.indicator, els.indicator2].forEach((el) => {
+          el.addEventListener(eventName, scheduleCompute);
+        });
+      });
+
+      [els.titrant, els.analyte].forEach((el) => {
+        el.addEventListener("change", syncCustomVisibility);
+      });
+
+      els.probe.addEventListener("input", () => {
+        setProbeValue(parseFloat(els.probe.value));
+        updateProbeReadout();
+        draw();
+      });
+
+      els.probeNumber.addEventListener("input", () => {
+        setProbeValue(parseFloat(els.probeNumber.value));
+        updateProbeReadout();
+        draw();
+      });
+
+      els.probeToggle.addEventListener("change", () => {
+        state.probeEnabled = els.probeToggle.checked;
+        els.probe.disabled = !state.probeEnabled;
+        els.probeNumber.disabled = !state.probeEnabled;
+        els.probeToggleLabel.textContent = state.probeEnabled ? tr().probeOn : tr().probeOff;
+        updateProbeReadout();
+        draw();
+      });
+
+      els.languageSelect.addEventListener("change", () => {
+        state.lang = els.languageSelect.value;
+        applyLanguage();
+      });
+
+      document.querySelectorAll(".mode-control button").forEach((button) => {
+        button.addEventListener("click", () => {
+          document.querySelectorAll(".mode-control button").forEach((b) => b.classList.remove("active"));
+          button.classList.add("active");
+          state.mode = button.dataset.mode;
+          draw();
+        });
+      });
+
+      document.querySelectorAll(".card button").forEach((button) => {
+        button.addEventListener("click", () => {
+          const card = button.closest(".card");
+          const isOpen = card.classList.contains("open");
+          document.querySelectorAll(".card").forEach((c) => c.classList.remove("open"));
+          if (!isOpen) card.classList.add("open");
+        });
+      });
+
+      document.getElementById("fullBtn").addEventListener("click", () => {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+        else document.exitFullscreen?.();
+      });
+
+      document.getElementById("sampleStrong")?.addEventListener("click", () => setSample("strong"));
+      document.getElementById("sampleCarbonate")?.addEventListener("click", () => setSample("carbonate"));
+      els.exportSvg.addEventListener("click", exportSvg);
+      els.exportPng.addEventListener("click", exportPng);
+      els.infoBtn.addEventListener("click", openInfo);
+      els.infoClose.addEventListener("click", closeInfo);
+      els.infoLayer.addEventListener("click", (event) => {
+        if (event.target === els.infoLayer) closeInfo();
+      });
+      window.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && document.body.classList.contains("modal-open")) closeInfo();
+      });
+      window.addEventListener("resize", () => {
+        fitTitle();
+        draw();
+      });
+    }
+
+    populateSelects();
+    attachEvents();
+    applyLanguage();
+    calculateCurve();
+  </script>
+</body>
+</html>
