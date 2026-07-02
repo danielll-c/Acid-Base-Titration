@@ -2,15 +2,6 @@
 
 Interactive acid-base titration curve generator for classroom demonstration and chemistry teaching.
 
-## Direct Use
-
-After publishing this repository with GitHub Pages, open:
-
-```text
-https://<your-github-username>.github.io/Acid-Base-Titration/
-```
-
-The app is a standalone `index.html`, so it can also be opened directly in a browser without a server.
 
 ## Features
 
